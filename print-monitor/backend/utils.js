@@ -1,0 +1,4 @@
+module.exports = {
+  resToPrinters(data){
+  }
+};
