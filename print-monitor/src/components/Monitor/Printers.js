@@ -1,7 +1,13 @@
+import dotenv from 'dotenv';
 import React from 'react';
 import { Spinner } from 'reactstrap';
 import axios from 'axios';
-import utils from '../../utils';
+
+// Allow access to environment variables
+dotenv.config()
+
+// Hide development IP when pushing to git
+var path = `${process.env.REACT_APP_API_URL}/printers`
 
 class Printers extends React.Component {
   constructor(props) {
@@ -16,8 +22,10 @@ class Printers extends React.Component {
   }
 
   fetchPrinters = () => {
-    this.setState({ loading: true })
     // request the statuses from the backend
+    axios.get(path)
+    .then(res=>console.log(res.data))
+    .catch(err=>console.log(err));
   }
 
   render() {
