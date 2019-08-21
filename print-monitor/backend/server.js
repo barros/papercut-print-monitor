@@ -1,16 +1,23 @@
 require('dotenv').config({path:'../.env'});
 var express = require('express');
 var axios = require('axios');
+const BodyParser = require("body-parser");
+
+// MongoDB Setup 
+const MongoClient = require("mongodb").MongoClient;
+const ObjectId = require("mongodb").ObjectID;
+
+// Global Variables
+const CONNECTION_URL = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@papercut-test-o3cqg.mongodb.net/test?retryWrites=true&w=majority`;
+const DATABASE_NAME = 'test';
+var database, collection;
 
 var app = express();
-
 const port = 5000;
 
-const paperCutAPIPath = "https://testpapercut.bc.edu/api/"
+const paperCutAPIPath = 'https://testpapercut.bc.edu/api/';
 
-// Save printers in a dictionary for now, will change to a mongodb instance soon
-var printers = {};
-
+// Middleware
 app.use(function (req, res, next) {
   // Allow CORS from all origins
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,7 +28,37 @@ app.use(function (req, res, next) {
   // Pass to next layer of middleware
   next();
 });
+app.use(BodyParser.json());
+app.use(BodyParser.urlencoded({ extended: true }));
 
+// Start server
+var server = app.listen(port, () => {
+  var host = server.address().address;
+  var port = server.address().port;
+
+  // Connect to MongoDB
+  MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
+    if(error) {
+      throw error;
+    }
+    database = client.db(DATABASE_NAME);
+    collection = database.collection("printers");
+    console.log("Connected to `" + DATABASE_NAME + "`");
+  });
+
+  // Initialize first status update
+  const url = `${paperCutAPIPath}health/printers`;
+  const headerConfig = {
+    headers: { "Authorization": process.env.PAPERCUT_API_KEY }
+  };
+
+  setTimeout(()=>{
+    requestPaperCutStatus()
+  }, 2000);
+  console.log(`Backend API server is running on ${host}:${port}`);
+});
+
+// ---------------- Routes ----------------
 // Get printers that are currently saved
 app.get('/printers', (req, res) => {
   // fetch printers from db
@@ -33,30 +70,35 @@ app.get('/refresh', (req, res) => {
   // ping PaperCut API to update statuses then return updates
   console.log('refreshing printers');
 });
+// ----------------------------------------
 
-var server = app.listen(port, function () {
-  var host = server.address().address;
-  var port = server.address().port;
-
-  // Initialize first status update
-  const url = `${paperCutAPIPath}health/printers`;
-  const headerConfig = {
-    headers: { "Authorization": process.env.PAPERCUT_API_KEY }
-  };
-
+// Request printer statuses from PaperCut API then update MongoDB
+function requestPaperCutStatus(){
   axios.get(url, headerConfig)
   .then(res => addPrinters(res.data))
   .catch(err=>console.log(err));
-  
-  console.log(`Backend API server is running on ${host}:${port}`);
-})
+}
 
-// convert API response data to printer dictionary
-addPrinters = (data) => {
+
+// Insert/Update printers received from PaperCut API to MongoDB database
+function addPrinters(data){
   const retreived = data.printers;
   retreived.forEach(printer => {
-    const name = printer.name;
-    printers[name] = printer
+    // Remove the 'four' server name that is prepended to all BC PaperCut printers
+    var printerName = printer.name.replace('four\\', '');
+    // Record to push to database
+    let record = {
+      'name': printerName,
+      'status': printer.status,
+      'lastModified': new Date()
+    }
+
+    var query = { name: { $eq: printerName } };
+    var data = { $set: record };
+    // Set 'upsert = true' so that printers that exist on DB get updated and those that don't get added
+    collection.updateOne(query, data, { upsert: true }, (err, collection) => {
+      if (err) throw err;
+      console.log("Record updated successfully");
+    });
   });
-  console.log(printers);
 }
