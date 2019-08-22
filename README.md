@@ -6,9 +6,9 @@ This repository holds the code for a print monitor web application (written in R
 
 The web app connects to the backend that handles the data regarding printer statuses (toner and paper levels). Printer statuses are received from PaperCut's own health API. From the main components, users will be able to see and refresh all the printer statuses. Authentication will not be required at the time of release because although this tool is meant for use by EagleTech and BC Libraries staff, there is no harm in the Boston College community knowing if a specific public-facing printer is out of toner or paper
 
-### TO DO
-
 ***
+
+### TO DO
 
 #### High Priority
 
@@ -24,6 +24,6 @@ The web app connects to the backend that handles the data regarding printer stat
 
 - filter printers by locations
 
-
+***
 
 *(All code found in this repo is owned by **Jeffrey Barros Peña** (Boston College '19) with the intended use by Boston College, Information Technology Services)*

@@ -15,7 +15,7 @@ var database, collection;
 var app = express();
 const port = 5000;
 
-const paperCutAPIPath = 'https://testpapercut.bc.edu/api/';
+const paperCutAPIPath = `${process.env.PAPERCUT_API_URL}/health/printers?Authorization=${process.env.PAPERCUT_API_KEY}`;
 
 // Middleware
 app.use(function (req, res, next) {
@@ -46,15 +46,12 @@ var server = app.listen(port, () => {
     console.log("Connected to `" + DATABASE_NAME + "`");
   });
 
-  // Initialize first status update
-  const url = `${paperCutAPIPath}health/printers`;
-  const headerConfig = {
-    headers: { "Authorization": process.env.PAPERCUT_API_KEY }
-  };
+  // Give the server 2 seconds to connect to database before fetching and adding statuses
+  setTimeout(requestPaperCutStatus, 2000);
 
-  setTimeout(()=>{
-    requestPaperCutStatus()
-  }, 2000);
+  // Refresh and update printer statuses every minute
+  setInterval(requestPaperCutStatus, 60000);
+
   console.log(`Backend API server is running on ${host}:${port}`);
 });
 
@@ -74,7 +71,7 @@ app.get('/refresh', (req, res) => {
 
 // Request printer statuses from PaperCut API then update MongoDB
 function requestPaperCutStatus(){
-  axios.get(url, headerConfig)
+  axios.get(paperCutAPIPath)
   .then(res => addPrinters(res.data))
   .catch(err=>console.log(err));
 }
@@ -95,10 +92,12 @@ function addPrinters(data){
 
     var query = { name: { $eq: printerName } };
     var data = { $set: record };
+    
     // Set 'upsert = true' so that printers that exist on DB get updated and those that don't get added
     collection.updateOne(query, data, { upsert: true }, (err, collection) => {
       if (err) throw err;
       console.log("Record updated successfully");
     });
   });
+  console.log('Update completed at: ' + new Date());
 }
