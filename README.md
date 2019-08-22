@@ -13,7 +13,7 @@ The web app connects to the backend that handles the data regarding printer stat
 #### High Priority
 
 - Backend
-  - create function interval for record updates
+  - create function interval for record updates ☑️
   - create server, database ☑️
   - the backend will connect to the PaperCut API on a set interval and add new printers, update current printers on the database ☑️
 - Front-end
