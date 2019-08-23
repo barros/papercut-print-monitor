@@ -22,14 +22,40 @@ class Printers extends React.Component {
   }
 
   fetchPrinters = () => {
+    this.setState({ loading: true })
     // request the statuses from the backend
     axios.get(path)
-    .then(res=>console.log(res.data))
+    .then(res=>this.refreshPrinters(res.data))
     .catch(err=>console.log(err));
+  }
+
+  refreshPrinters = (printers) => {
+    let updatedPrinters = [];
+    printers.forEach(printer => {
+      updatedPrinters.push(printer);
+    });
+    this.setState({ loading: false,
+                    printers: updatedPrinters });
+    // const testPrinters = this.state.printers;
+    // testPrinters.forEach(printer => {
+    //   console.log(printer.name);
+    // });
+
   }
 
   render() {
     let spinnerJSX;
+    // List that will be updated with printer statuses
+    let printerJSX = [];
+    if (this.state.printers){
+      this.state.printers.forEach(printer => {
+        console.log(printer.name);
+        printerJSX.push(<div key={printer.id}>
+          {printer.name} -- {printer.status}
+        </div>);
+      });
+      console.log(`printerJSX size = ${printerJSX.length}`)
+    }
     if (this.state.loading) {
       spinnerJSX = <Spinner color="info"/>
     } else {
@@ -39,6 +65,7 @@ class Printers extends React.Component {
       <div style={{paddingBottom:"20px"}}>
         <div style={{textAlign: "center"}}>
           {spinnerJSX}
+          {printerJSX}
         </div>
       </div>
     );

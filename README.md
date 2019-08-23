@@ -17,7 +17,7 @@ The web app connects to the backend that handles the data regarding printer stat
   - create server, database ☑️
   - the backend will connect to the PaperCut API on a set interval and add new printers, update current printers on the database ☑️
 - Front-end
-  - fetch printer statuses from backend
+  - fetch printer statuses from backend ☑️
   - create individual printer components
 
 #### Low Priority

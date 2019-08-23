@@ -59,7 +59,10 @@ var server = app.listen(port, () => {
 // Get printers that are currently saved
 app.get('/printers', (req, res) => {
   // fetch printers from db
-  res.json(printers);
+  collection.find({}).toArray(function(err, result) {
+    if (err) throw err;
+    res.json(result);
+  });
 });
 
 // Trigger a refresh of statuses and get updates
