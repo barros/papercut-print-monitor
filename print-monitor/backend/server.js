@@ -17,6 +17,7 @@ const CONNECTION_URL = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.
 const DATABASE_NAME = 'test';
 var database, collection, batch;
 const port = 5000;
+var lastPrinterUpdate;
 
 const paperCutAPIPath = `${process.env.PAPERCUT_API_URL}/health/printers?Authorization=${process.env.PAPERCUT_API_KEY}`;
 
@@ -66,11 +67,7 @@ server.listen(port, () => {
 // ---------------- Routes ----------------
 // Get printers that are currently saved
 app.get('/printers', (req, res) => {
-  // Fetch printers from db
-  collection.find({}).toArray(function(err, result) {
-    if (err) throw err;
-    res.json(result);
-  });
+  handleGETPrinters(res);
 });
 
 // Trigger a refresh of statuses and get updates
@@ -88,19 +85,30 @@ function requestPaperCutStatus(){
 }
 
 function refreshPrinters(data){
-  Promise.all([updateDB(data), getFromDB()])
-  .then((values) => {
-    // console.log(values)
-  })
-  .catch((err) => {
-    throw err;
-  })
+  updateDB(data);
+  // Promise.all([updateDB(data), updateSocketClients()])
+  // .then((values) => {
+  //   // console.log(values)
+  // })
+  // .catch((err) => {
+  //   throw err;
+  // })
 }
 
-function getFromDB(){
+// Send printers to socket clients
+function updateSocketClients(){
   collection.find({}).toArray(function(err, result) {
     if (err) throw err;
-    return result;
+    io.sockets.emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+    // return result;
+  });
+}
+
+// Send printers through an HTTP response
+function handleGETPrinters(response){
+  collection.find({}).toArray(function(err, result) {
+    if (err) throw err;
+    response.json(result);
   });
 }
 
@@ -122,7 +130,7 @@ function updateDB(data){
     var query = { name: printerName };
     var data = { $set: record };
     
-    // Set '.upsert()' so that printers that exist on DB get updated and those that don't get added
+    // Call '.upsert()' so that printers that exist on DB get updated and those that don't get added
     batch.find(query).upsert().update(data)
     // collection.updateOne(query, data, { upsert: true }, (err, collection) => {
     //   if (err) throw err;
@@ -131,9 +139,15 @@ function updateDB(data){
     // });
   });
   batch.execute((err, result) => {
-    if (err) throw err;
-    console.log(result);
+    if (err){
+      console.log('ERROR IN MONGODB BULK OPERATION');
+      throw err;
+    }
+    console.log('Update completed at: ' + new Date());
+    lastPrinterUpdate = new Date();
+    console.log(`Bulk operation result: ${result}`);
+    // emit updates to socket clients
+    updateSocketClients();
   });
   batch = collection.initializeUnorderedBulkOp();
-  console.log('Update completed at: ' + new Date());
 }

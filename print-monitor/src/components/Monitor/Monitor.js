@@ -1,14 +1,67 @@
+import dotenv from 'dotenv';
 import React from 'react';
+import axios from 'axios';
+import socketIOClient from 'socket.io-client';
+
 import MonitorHead from "./MonitorHead";
 import Printers from "./Printers";
 
-function Monitor() {
-  return (
-    <div>
-      <MonitorHead />
-      <Printers />
-    </div>
-  );
+dotenv.config();
+
+var apiPath = `${process.env.REACT_APP_API_DOMAIN}/printers`
+
+class Monitor extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = ({
+      printers: [],
+      loading: false
+    });
+    this.socket = socketIOClient(process.env.REACT_APP_API_DOMAIN, { secure: true });
+    this.connectSocket();
+  }
+
+  componentDidMount(){
+    this.fetchPrinters();
+  }
+
+  fetchPrinters = () => {
+    this.setState({ loading: true });
+    // request the statuses from the backend
+    axios.get(apiPath)
+    .then(res=>this.refreshPrinters(res.data))
+    .catch(err=>console.log(err));
+  }
+
+  connectSocket = () => {
+    this.socket.on('updated printers', (res) => {
+      this.setState({ lastUpdate: res.lastUpdate })
+      this.refreshPrinters(res.printers);
+    });
+  }
+
+  refreshPrinters = (printers) => {
+    let updatedPrinters = [];
+    printers.forEach(printer => {
+      updatedPrinters.push(printer);
+    });
+    this.setState({ loading: false,
+                    printers: updatedPrinters });
+    const testPrinters = this.state.printers;
+    console.log(`testing state.lastUpdate: ${this.state.lastUpdate}`)
+    testPrinters.forEach(printer => {
+      console.log(printer);
+    });
+  }
+
+  render(){
+    return (
+      <div>
+        <MonitorHead />
+        <Printers printers={this.state.printers}/>
+      </div>
+    );
+  }
 }
 
 export default Monitor;
