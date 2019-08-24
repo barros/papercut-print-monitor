@@ -14,6 +14,7 @@ class Monitor extends React.Component {
   constructor(props){
     super(props);
     this.state = ({
+      lastUpdate: undefined,
       printers: [],
       loading: false
     });
@@ -29,7 +30,10 @@ class Monitor extends React.Component {
     this.setState({ loading: true });
     // request the statuses from the backend
     axios.get(apiPath)
-    .then(res=>this.refreshPrinters(res.data))
+    .then(res => function(){
+      this.setState({ lastUpdate: res.data.lastUpdate });
+      this.refreshPrinters(res.data.printers);
+    })
     .catch(err=>console.log(err));
   }
 
@@ -57,7 +61,7 @@ class Monitor extends React.Component {
   render(){
     return (
       <div>
-        <MonitorHead />
+        <MonitorHead lastUpdate={this.state.lastUpdate}/>
         <Printers printers={this.state.printers}/>
       </div>
     );

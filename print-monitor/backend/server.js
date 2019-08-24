@@ -72,7 +72,7 @@ app.get('/printers', (req, res) => {
 
 // Trigger a refresh of statuses and get updates
 app.get('/refresh', (req, res) => {
-  // ping PaperCut API to update statuses then return updates
+  // Ping PaperCut API to update statuses then return updates
   console.log('refreshing printers');
 });
 // ----------------------------------------
@@ -108,7 +108,8 @@ function updateSocketClients(){
 function handleGETPrinters(response){
   collection.find({}).toArray(function(err, result) {
     if (err) throw err;
-    response.json(result);
+    response.json({ lastUpdate: lastPrinterUpdate,
+                    printers: result });
   });
 }
 
@@ -130,7 +131,7 @@ function updateDB(data){
     var query = { name: printerName };
     var data = { $set: record };
     
-    // Call '.upsert()' so that printers that exist on DB get updated and those that don't get added
+    // Call 'upsert()' so that printers that exist on DB get updated and those that don't get added
     batch.find(query).upsert().update(data)
     // collection.updateOne(query, data, { upsert: true }, (err, collection) => {
     //   if (err) throw err;
