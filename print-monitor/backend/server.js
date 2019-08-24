@@ -1,7 +1,12 @@
 require('dotenv').config({path:'../.env'});
 var express = require('express');
-var axios = require('axios');
 const BodyParser = require("body-parser");
+var app = express();
+const server = require('http').createServer(app); // server instance
+var axios = require('axios');
+const socketIO = require('socket.io');
+const io = socketIO(server); // creates our socket using the instance of the server
+
 
 // MongoDB Setup 
 const MongoClient = require("mongodb").MongoClient;
@@ -10,9 +15,7 @@ const ObjectId = require("mongodb").ObjectID;
 // Global Variables
 const CONNECTION_URL = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@papercut-test-o3cqg.mongodb.net/test?retryWrites=true&w=majority`;
 const DATABASE_NAME = 'test';
-var database, collection;
-
-var app = express();
+var database, collection, batch;
 const port = 5000;
 
 const paperCutAPIPath = `${process.env.PAPERCUT_API_URL}/health/printers?Authorization=${process.env.PAPERCUT_API_KEY}`;
@@ -32,7 +35,7 @@ app.use(BodyParser.json());
 app.use(BodyParser.urlencoded({ extended: true }));
 
 // Start server
-var server = app.listen(port, () => {
+server.listen(port, () => {
   var host = server.address().address;
   var port = server.address().port;
 
@@ -43,6 +46,11 @@ var server = app.listen(port, () => {
     }
     database = client.db(DATABASE_NAME);
     collection = database.collection("printers");
+    /*
+      Add the printers to DB in a batch so that there can be one callback when data is inserted/updated
+      Callback would only work for each collection.updateOne call
+    */
+    batch = collection.initializeUnorderedBulkOp();
     console.log("Connected to `" + DATABASE_NAME + "`");
   });
 
@@ -58,7 +66,7 @@ var server = app.listen(port, () => {
 // ---------------- Routes ----------------
 // Get printers that are currently saved
 app.get('/printers', (req, res) => {
-  // fetch printers from db
+  // Fetch printers from db
   collection.find({}).toArray(function(err, result) {
     if (err) throw err;
     res.json(result);
@@ -75,17 +83,35 @@ app.get('/refresh', (req, res) => {
 // Request printer statuses from PaperCut API then update MongoDB
 function requestPaperCutStatus(){
   axios.get(paperCutAPIPath)
-  .then(res => addPrinters(res.data))
+  .then(res => refreshPrinters(res.data))
   .catch(err=>console.log(err));
+}
+
+function refreshPrinters(data){
+  Promise.all([updateDB(data), getFromDB()])
+  .then((values) => {
+    // console.log(values)
+  })
+  .catch((err) => {
+    throw err;
+  })
+}
+
+function getFromDB(){
+  collection.find({}).toArray(function(err, result) {
+    if (err) throw err;
+    return result;
+  });
 }
 
 
 // Insert/Update printers received from PaperCut API to MongoDB database
-function addPrinters(data){
+function updateDB(data){
   const retreived = data.printers;
   retreived.forEach(printer => {
     // Remove the 'four' server name that is prepended to all BC PaperCut printers
     var printerName = printer.name.replace('four\\', '');
+
     // Record to push to database
     let record = {
       'name': printerName,
@@ -93,14 +119,21 @@ function addPrinters(data){
       'lastModified': new Date()
     }
 
-    var query = { name: { $eq: printerName } };
+    var query = { name: printerName };
     var data = { $set: record };
     
-    // Set 'upsert = true' so that printers that exist on DB get updated and those that don't get added
-    collection.updateOne(query, data, { upsert: true }, (err, collection) => {
-      if (err) throw err;
-      console.log("Record updated successfully");
-    });
+    // Set '.upsert()' so that printers that exist on DB get updated and those that don't get added
+    batch.find(query).upsert().update(data)
+    // collection.updateOne(query, data, { upsert: true }, (err, collection) => {
+    //   if (err) throw err;
+    //   console.log("Record updated successfully");
+    //   console.log(collection)
+    // });
   });
+  batch.execute((err, result) => {
+    if (err) throw err;
+    console.log(result);
+  });
+  batch = collection.initializeUnorderedBulkOp();
   console.log('Update completed at: ' + new Date());
 }
