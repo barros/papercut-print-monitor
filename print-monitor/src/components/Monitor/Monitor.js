@@ -62,7 +62,7 @@ class Monitor extends React.Component {
     return (
       <div>
         <MonitorHead lastUpdate={this.state.lastUpdate}/>
-        <Printers printers={this.state.printers}/>
+        <Printers printers={this.state.printers} loading={this.state.loading}/>
       </div>
     );
   }
