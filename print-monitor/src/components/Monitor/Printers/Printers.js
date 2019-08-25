@@ -1,5 +1,6 @@
 import React from 'react';
 import { Spinner } from 'reactstrap';
+import PrinterView from './PrinterView';
 
 class Printers extends React.Component {
   constructor(props) {
@@ -9,9 +10,7 @@ class Printers extends React.Component {
       loading: false
     });
   }
-  componentDidMount() {
-    //this.fetchPrinters()
-  }
+  
   componentWillReceiveProps(nextProps){
     if (nextProps !== this.props) {
       this.setState({ printers: nextProps.printers,
@@ -25,9 +24,11 @@ class Printers extends React.Component {
     let printerJSX = [];
     if (this.state.printers){
       this.state.printers.forEach(printer => {
-        printerJSX.push(<div key={printer._id}>
-          {printer.name} -- {printer.status}
-        </div>);
+        printerJSX.push(
+                        <div key={printer._id}>
+                          <PrinterView printer={printer} />
+                        </div>
+        );
       });
     }
     if (this.state.loading) {
