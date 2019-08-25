@@ -29,6 +29,7 @@ app.use(function (req, res, next) {
   // Request methods to allow
   res.setHeader('Access-Control-Allow-Methods', 'GET');
 
+  res.setHeader('Content-Type', 'application/json');
   // Pass to next layer of middleware
   next();
 });
@@ -77,6 +78,20 @@ app.get('/refresh', (req, res) => {
 });
 // ----------------------------------------
 
+io.on('connection', (socket) => {
+  socket.on('get printers', (res) => {
+    collection.find({}).toArray(function(err, result) {
+      if (err) throw err;
+      io.sockets.emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+      // let json = {
+      //   lastUpdate: lastPrinterUpdate,
+      //   printers: result
+      // }
+      // response.json(json);
+    });
+  });
+});
+
 // Request printer statuses from PaperCut API then update MongoDB
 function requestPaperCutStatus(){
   axios.get(paperCutAPIPath)
@@ -108,8 +123,12 @@ function updateSocketClients(){
 function handleGETPrinters(response){
   collection.find({}).toArray(function(err, result) {
     if (err) throw err;
-    response.json({ lastUpdate: lastPrinterUpdate,
-                    printers: result });
+    console.log('in handleGETPrinters(): ' + result)
+    let json = {
+      lastUpdate: lastPrinterUpdate,
+      printers: result
+    }
+    response.json(json);
   });
 }
 

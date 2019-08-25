@@ -27,14 +27,19 @@ class Monitor extends React.Component {
   }
 
   fetchPrinters = () => {
-    this.setState({ loading: true });
-    // request the statuses from the backend
-    axios.get(apiPath)
-    .then(res => function(){
-      this.setState({ lastUpdate: res.data.lastUpdate });
-      this.refreshPrinters(res.data.printers);
-    })
-    .catch(err=>console.log(err));
+    this.setState({ loading: true })
+    this.socket.emit('get printers', (res) => {
+      this.refreshPrinters(res.printer);
+    });
+    // this.setState({ loading: true });
+    // // request the statuses from the backend
+    // axios.get(apiPath)
+    // .then(res => function(){
+    //   console.log(res);
+    //   // this.setState({ lastUpdate: res.data.lastUpdate });
+    //   this.refreshPrinters(res.data);
+    // })
+    // .catch(err=>console.log(err));
   }
 
   connectSocket = () => {
