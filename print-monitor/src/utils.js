@@ -25,11 +25,11 @@ function getStatus(dbStatus){
 function getPrinterViewColor(dbStatus){
   const statuses = {
     'OK': '#9dff89', // green
-    'PAPER_JAM': '#c50000',
+    'PAPER_JAM': '#c50000', // red
     'PAPER_OUT': '#c50000',
     'PAPER_PROBLEM': '#c50000',
     'OUTPUT_BIN_FULL': '#c50000',
-    'NOT_AVAILABLE': '#ffd83d',
+    'NOT_AVAILABLE': '#ffd83d', // orange
     'NO_TONER': '#c50000',
     'OUT_OF_MEMORY': '#c50000',
     'OFFLINE': '#c50000',

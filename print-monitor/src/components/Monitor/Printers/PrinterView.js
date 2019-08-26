@@ -8,12 +8,13 @@ class PrinterView extends React.Component {
   }
 
   render(){
-    let body;
-    body = utils.getStatus(this.props.printer.status);
-    return (<Toast>
-              <ToastHeader>{this.props.printer.name}</ToastHeader>
-              <ToastBody>{body}</ToastBody>
-            </Toast>)
+    let body = utils.getStatus(this.props.printer.status);
+    let backgroundColor = utils.getPrinterViewColor(this.props.printer.status);
+    let fontColor = (backgroundColor==='#c50000' ? 'white' : 'black');
+    return (<Toast style={{ backgroundColor: backgroundColor, marginBottom: '20px' }}>
+              <ToastHeader style={{fontSize: '17px'}}>{this.props.printer.name}</ToastHeader>
+              <ToastBody style={{fontSize: '15px', color: fontColor}}>{body}</ToastBody>
+            </Toast>);
   }
 }
 

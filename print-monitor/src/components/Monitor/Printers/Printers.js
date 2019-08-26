@@ -24,11 +24,7 @@ class Printers extends React.Component {
     let printerJSX = [];
     if (this.state.printers){
       this.state.printers.forEach(printer => {
-        printerJSX.push(
-                        <div key={printer._id}>
-                          <PrinterView printer={printer} />
-                        </div>
-        );
+        printerJSX.push(<PrinterView key={ printer._id } printer={ printer } />);
       });
     }
     if (this.state.loading) {
@@ -40,7 +36,7 @@ class Printers extends React.Component {
       <div style={{paddingBottom:"20px"}}>
         <div style={{textAlign: "center"}}>
           {spinnerJSX}
-          {printerJSX}
+          <div>{printerJSX}</div>
         </div>
       </div>
     );
