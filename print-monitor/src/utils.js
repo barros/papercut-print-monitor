@@ -18,7 +18,6 @@ function getStatus(dbStatus){
   if (!statuses[dbStatus]){
     return 'Unknown';
   }
-
   return statuses[dbStatus];
 }
 
@@ -42,7 +41,6 @@ function getPrinterViewColor(dbStatus){
   if (!statuses[dbStatus]){
     return 'white';
   }
-
   return statuses[dbStatus];
 }
 
@@ -66,12 +64,28 @@ function getBadge(dbStatus){
   if (!statuses[dbStatus]){
     return 'UNKNOWN';
   }
-
   return statuses[dbStatus];
+}
+
+function getIconColor(badge){
+  const badgeColors = {
+    'ONLINE': '#35582e', // darkslategreen,
+    'OFFLINE': '#c50000', // dark red
+    'ATTENTION': '#c46512', // orange
+    'UNAVAILABLE': '#c46512', // orange
+    'UNKNOWN': '#c46512', // orange
+    'ERROR': '#c50000' // dark red
+  };
+  
+  if (!badgeColors[badge]){
+    return 'black';
+  }
+  return badgeColors[badge];
 }
 
 module.exports = {
   getStatus: getStatus,
   getPrinterViewColor: getPrinterViewColor,
-  getBadge: getBadge
+  getBadge: getBadge,
+  getIconColor: getIconColor
 }
