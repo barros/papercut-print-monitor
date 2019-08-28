@@ -33,8 +33,8 @@ class Printers extends React.Component {
       spinnerJSX = ""
     }
     return (
-      <div style={{paddingBottom:"20px"}}>
-        <div style={{textAlign: "center"}}>
+      <div style={{paddingBottom:"20px", marginLeft: '30px'}}>
+        <div>
           {spinnerJSX}
           <div>{printerJSX}</div>
         </div>

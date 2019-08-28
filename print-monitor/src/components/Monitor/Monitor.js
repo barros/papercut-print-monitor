@@ -4,7 +4,7 @@ import axios from 'axios';
 import socketIOClient from 'socket.io-client';
 
 import MonitorHead from "./MonitorHead";
-import Printers from "./Printers";
+import Printers from "./Printers/Printers";
 
 dotenv.config();
 
@@ -67,7 +67,7 @@ class Monitor extends React.Component {
     return (
       <div>
         <MonitorHead lastUpdate={this.state.lastUpdate}/>
-        <Printers printers={this.state.printers} loading={this.state.loading}/>
+        <Printers printers={this.state.printers} loading={this.state.loading} />
       </div>
     );
   }
