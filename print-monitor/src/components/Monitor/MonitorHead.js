@@ -16,7 +16,8 @@ componentWillReceiveProps(nextProps){
 render(){
   let lastUpdateJSX;
   if (this.state.lastUpdate){
-    lastUpdateJSX = <Alert color='primary'>Last Updated at: {this.state.lastUpdate}</Alert>;
+    var lastUpdateText = new Date(this.state.lastUpdate).toLocaleString()
+    lastUpdateJSX = <Alert color='primary'>Last Updated at: <strong>{lastUpdateText}</strong></Alert>;
   }
 
   return (
