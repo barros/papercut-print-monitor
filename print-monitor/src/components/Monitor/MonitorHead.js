@@ -25,7 +25,7 @@ render(){
       <p className="lead">Below is the status of the PaperCut Release Station printers</p>
       <hr className="my-2" />
       <p >
-          <Button color="primary" style={{marginTop: "15px"}}>Refresh Monitor</Button>
+          <Button onClick={this.props.handleRefresh} color="primary" style={{marginTop: "15px"}}>Refresh Monitor</Button>
       </p>
       {lastUpdateJSX}
     </Jumbotron>

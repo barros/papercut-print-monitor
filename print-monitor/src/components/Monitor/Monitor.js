@@ -63,10 +63,15 @@ class Monitor extends React.Component {
     });
   }
 
+  handleRefresh = () => {
+    this.setState({ printers: [], loading: true });
+    this.socket.emit('refresh');
+  };
+
   render(){
     return (
       <div>
-        <MonitorHead lastUpdate={this.state.lastUpdate}/>
+        <MonitorHead lastUpdate={this.state.lastUpdate} handleRefresh={this.handleRefresh}/>
         <Printers printers={this.state.printers} loading={this.state.loading} />
       </div>
     );

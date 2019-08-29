@@ -90,6 +90,10 @@ io.on('connection', (socket) => {
       // response.json(json);
     });
   });
+
+  socket.on('refresh', () => {
+    requestPaperCutStatus();
+  });
 });
 
 // Request printer statuses from PaperCut API then update MongoDB
