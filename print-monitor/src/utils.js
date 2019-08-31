@@ -76,9 +76,22 @@ function getIconColor(badge){
   return badgeColors[badge];
 }
 
+function getFullLocation(id){
+  const locations = {
+    0: 'All Printers',
+    1: 'O\'Neill Library'
+  };
+
+  if (!locations[id]){
+    return 'Printers'
+  }
+  return locations[id];
+}
+
 module.exports = {
   getStatus: getStatus,
   getBadge: getBadge,
   getBadgeColor: getBadgeColor,
-  getIconColor: getIconColor
+  getIconColor: getIconColor,
+  getFullLocation: getFullLocation
 }
