@@ -18,6 +18,7 @@ const DATABASE_NAME = 'test';
 var database, collection, batch;
 const port = 5000;
 var lastPrinterUpdate;
+var locSubscriptions = [[]];
 
 const paperCutAPIPath = `${process.env.PAPERCUT_API_URL}/health/printers?Authorization=${process.env.PAPERCUT_API_KEY}`;
 
@@ -60,82 +61,85 @@ server.listen(port, () => {
   setTimeout(requestPaperCutStatus, 2000);
 
   // Refresh and update printer statuses every minute
-  setInterval(requestPaperCutStatus, 60000);
+  setInterval(requestPaperCutStatus, 10000);
 
   console.log(`Backend API server is running on ${host}:${port}`);
 });
 
-// ---------------- Routes ----------------
-// Get printers that are currently saved
-app.get('/printers', (req, res) => {
-  handleGETPrinters(res);
-});
-
-// Trigger a refresh of statuses and get updates
-app.get('/refresh', (req, res) => {
-  // Ping PaperCut API to update statuses then return updates
-  console.log('refreshing printers');
-});
-// ----------------------------------------
-
+/*
+  Socket Handling
+*/
 io.on('connection', (socket) => {
-  socket.on('get printers', (res) => {
-    collection.find({}).toArray(function(err, result) {
-      if (err) throw err;
-      io.sockets.emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
-      // let json = {
-      //   lastUpdate: lastPrinterUpdate,
-      //   printers: result
-      // }
-      // response.json(json);
-    });
+  console.log(`socket id (${socket.id}) connected`)
+  locSubscriptions[0].push(socket.id);
+
+  // Get a status update of a specific location
+  socket.on('get', (locID) => {
+    emitToSocket(locID, socket.id);
   });
 
+  // A refresh request will refresh the entire database and refresh all sockets
   socket.on('refresh', () => {
     requestPaperCutStatus();
   });
+
+  // Change subscription channel, occurs when a user changes location via button drop-down
+  socket.on('sub change', (subscriptionData) => {
+    // Location socket was previously subscribed to
+    let prevSub = subscriptionData.prevSub;
+    // New location socket is subscribed to
+    let newSub = subscriptionData.newSub;
+    const indexToDelete = locSubscriptions[prevSub].indexOf(socket.id);
+
+    if (indexToDelete!==-1){
+      // Remove socket ID from old subscription channel
+      locSubscriptions[prevSub].splice(indexToDelete, 1);
+      // Subscribe socket ID to new location
+      if (locSubscriptions[newSub]){
+        locSubscriptions[newSub].push(socket.id);
+      } else {
+        locSubscriptions[newSub] = [socket.id];
+      }
+    }
+    // Update the socket the printers of their new subscription
+    emitToSocket(newSub, socket.id);
+  });
+
+  socket.on('disconnect', () => {
+    // Remove socket ID from any subscribed channels
+    for (subscriptions of locSubscriptions){
+      const indexToDelete = subscriptions.indexOf(socket.id);
+      if (indexToDelete!==-1){
+        subscriptions.splice(indexToDelete, 1);
+      }
+    }
+  })
 });
+/*
+----------------------------------------------------------
+*/
+
+// Emit specific location printers to specific socket
+function emitToSocket(locID, socketID){
+  if (locID==0){ // Query all locations
+    collection.find({}).toArray(function(err, result) {
+      if (err) throw err;
+      io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+    });
+  } else if (locID==1){ //  // Query O'Neill Library
+    collection.find({ "name" : { $regex : "oneill" } }).toArray(function(err, result) {
+      if (err) throw err;
+      io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+    });
+  }
+}
 
 // Request printer statuses from PaperCut API then update MongoDB
 function requestPaperCutStatus(){
   axios.get(paperCutAPIPath)
-  .then(res => refreshPrinters(res.data))
+  .then(res => updateDB(res.data))
   .catch(err=>console.log(err));
 }
-
-function refreshPrinters(data){
-  updateDB(data);
-  // Promise.all([updateDB(data), updateSocketClients()])
-  // .then((values) => {
-  //   // console.log(values)
-  // })
-  // .catch((err) => {
-  //   throw err;
-  // })
-}
-
-// Send printers to socket clients
-function updateSocketClients(){
-  collection.find({}).toArray(function(err, result) {
-    if (err) throw err;
-    io.sockets.emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
-    // return result;
-  });
-}
-
-// Send printers through an HTTP response
-function handleGETPrinters(response){
-  collection.find({}).toArray(function(err, result) {
-    if (err) throw err;
-    console.log('in handleGETPrinters(): ' + result)
-    let json = {
-      lastUpdate: lastPrinterUpdate,
-      printers: result
-    }
-    response.json(json);
-  });
-}
-
 
 // Insert/Update printers received from PaperCut API to MongoDB database
 function updateDB(data){
@@ -156,11 +160,6 @@ function updateDB(data){
     
     // Call 'upsert()' so that printers that exist on DB get updated and those that don't get added
     batch.find(query).upsert().update(data)
-    // collection.updateOne(query, data, { upsert: true }, (err, collection) => {
-    //   if (err) throw err;
-    //   console.log("Record updated successfully");
-    //   console.log(collection)
-    // });
   });
   batch.execute((err, result) => {
     if (err){
@@ -170,8 +169,29 @@ function updateDB(data){
     console.log('Update completed at: ' + new Date());
     lastPrinterUpdate = new Date();
     console.log(`Bulk operation result: ${result}`);
-    // emit updates to socket clients
+    // Emit updates to socket clients
     updateSocketClients();
   });
   batch = collection.initializeUnorderedBulkOp();
+}
+
+// Update sockets with their respective subscriptions
+function updateSocketClients(){
+  for (locID in locSubscriptions){
+    if (locID==0){ // Query all locations
+      collection.find({}).toArray(function(err, result) {
+        if (err) throw err;
+        for (socketID of locSubscriptions[locID]){
+          if (socketID){
+            io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+          }
+        }
+      });
+    } else if (locID==1){ // Query O'Neill Library
+      collection.find({ "name" : { $regex : "oneill" } }).toArray(function(err, result) {
+        if (err) throw err;
+        io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+      });
+    }
+  }
 }
