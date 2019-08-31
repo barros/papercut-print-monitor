@@ -18,7 +18,11 @@ const DATABASE_NAME = 'test';
 var database, collection, batch;
 const port = 5000;
 var lastPrinterUpdate;
-var locSubscriptions = [[]];
+// Location ID: Socket Namespace mapping
+const subscriptionNamespaces = {
+  0: 'all locations',
+  1: 'oneill'
+};
 
 const paperCutAPIPath = `${process.env.PAPERCUT_API_URL}/health/printers?Authorization=${process.env.PAPERCUT_API_KEY}`;
 
@@ -43,19 +47,27 @@ server.listen(port, () => {
   var port = server.address().port;
 
   // Connect to MongoDB
-  MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
-    if(error) {
-      throw error;
+  while (true){ // Continue reattemping DB connection if attempts fail
+    try {
+      MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
+        if(error) {
+          console.log(error);
+        }
+        database = client.db(DATABASE_NAME);
+        collection = database.collection("printers");
+        /*
+          Add the printers to DB in a batch so that there can be one callback when data is inserted/updated
+          Callback would only work for each collection.updateOne call
+        */
+        batch = collection.initializeUnorderedBulkOp();
+        console.log("Connected to `" + DATABASE_NAME + "`");
+      });
+      break;
+    } catch(err){
+      // Log error
+      console.log('ERROR CONNECTING TO MONGODB: '+err);
     }
-    database = client.db(DATABASE_NAME);
-    collection = database.collection("printers");
-    /*
-      Add the printers to DB in a batch so that there can be one callback when data is inserted/updated
-      Callback would only work for each collection.updateOne call
-    */
-    batch = collection.initializeUnorderedBulkOp();
-    console.log("Connected to `" + DATABASE_NAME + "`");
-  });
+  }
 
   // Give the server 2 seconds to connect to database before fetching and adding statuses
   setTimeout(requestPaperCutStatus, 2000);
@@ -70,8 +82,8 @@ server.listen(port, () => {
   Socket Handling
 */
 io.on('connection', (socket) => {
-  console.log(`socket id (${socket.id}) connected`)
-  locSubscriptions[0].push(socket.id);
+  console.log(`Socket ID (${socket.id}) connected`)
+  socket.join('all locations');
 
   // Get a status update of a specific location
   socket.on('get', (locID) => {
@@ -84,36 +96,20 @@ io.on('connection', (socket) => {
   });
 
   // Change subscription channel, occurs when a user changes location via button drop-down
-  socket.on('sub change', (subscriptionData) => {
-    // Location socket was previously subscribed to
-    let prevSub = subscriptionData.prevSub;
-    // New location socket is subscribed to
-    let newSub = subscriptionData.newSub;
-    const indexToDelete = locSubscriptions[prevSub].indexOf(socket.id);
+  socket.on('sub change', (newSubscription) => {
+    socket.leave('all locations');
+    const namespace = subscriptionNamespaces[newSubscription]
+    socket.join(namespace);
+    console.log(`Socket ID (${socket.id}) subscribed to ${namespace}`);
 
-    if (indexToDelete!==-1){
-      // Remove socket ID from old subscription channel
-      locSubscriptions[prevSub].splice(indexToDelete, 1);
-      // Subscribe socket ID to new location
-      if (locSubscriptions[newSub]){
-        locSubscriptions[newSub].push(socket.id);
-      } else {
-        locSubscriptions[newSub] = [socket.id];
-      }
-    }
     // Update the socket the printers of their new subscription
-    emitToSocket(newSub, socket.id);
+    emitToSocket(newSubscription, socket.id);
   });
 
+  // Disconnection removes socket from location namespace
   socket.on('disconnect', () => {
-    // Remove socket ID from any subscribed channels
-    for (subscriptions of locSubscriptions){
-      const indexToDelete = subscriptions.indexOf(socket.id);
-      if (indexToDelete!==-1){
-        subscriptions.splice(indexToDelete, 1);
-      }
-    }
-  })
+    console.log(`Socket ID (${socket.id}) disconnected`);
+  });
 });
 /*
 ----------------------------------------------------------
@@ -169,29 +165,26 @@ function updateDB(data){
     console.log('Update completed at: ' + new Date());
     lastPrinterUpdate = new Date();
     console.log(`Bulk operation result: ${result}`);
-    // Emit updates to socket clients
-    updateSocketClients();
+    // Emit updates to socket clients, begins with namespace 'all locations'
+    updateSocketClients(0);
   });
   batch = collection.initializeUnorderedBulkOp();
 }
 
 // Update sockets with their respective subscriptions
-function updateSocketClients(){
-  for (locID in locSubscriptions){
-    if (locID==0){ // Query all locations
-      collection.find({}).toArray(function(err, result) {
-        if (err) throw err;
-        for (socketID of locSubscriptions[locID]){
-          if (socketID){
-            io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
-          }
-        }
-      });
-    } else if (locID==1){ // Query O'Neill Library
-      collection.find({ "name" : { $regex : "oneill" } }).toArray(function(err, result) {
-        if (err) throw err;
-        io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
-      });
-    }
+function updateSocketClients(currentLocID){
+  console.log(`Updating socket namespace: ${subscriptionNamespaces[currentLocID]}`);
+  if (currentLocID==0){
+    collection.find({}).toArray(function(err, result) {
+      if (err) throw err;
+      io.to('all locations').emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+      updateSocketClients(++currentLocID);
+    });
+  } else if (currentLocID==1){
+    collection.find({ "name" : { $regex : "oneill" } }).toArray(function(err, result) {
+      if (err) throw err;
+      io.to('oneill').emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+    });
   }
+  return;
 }

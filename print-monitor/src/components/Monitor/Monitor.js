@@ -14,9 +14,10 @@ class Monitor extends React.Component {
   constructor(props){
     super(props);
     this.state = ({
-      lastUpdate: undefined,
+      lastUpdate: null,
       printers: [],
-      loading: false
+      loading: false,
+      selectedLocation: 0
     });
     this.socket = socketIOClient(process.env.REACT_APP_API_DOMAIN, { secure: true });
     this.connectSocket();
@@ -26,20 +27,8 @@ class Monitor extends React.Component {
     this.fetchPrinters();
   }
 
-  fetchPrinters = () => {
-    this.setState({ loading: true })
-    this.socket.emit('get printers', (res) => {
-      this.refreshPrinters(res.printer);
-    });
-    // this.setState({ loading: true });
-    // // request the statuses from the backend
-    // axios.get(apiPath)
-    // .then(res => function(){
-    //   console.log(res);
-    //   // this.setState({ lastUpdate: res.data.lastUpdate });
-    //   this.refreshPrinters(res.data);
-    // })
-    // .catch(err=>console.log(err));
+  componentWillUnmount(){
+    this.socket.close();
   }
 
   connectSocket = () => {
@@ -47,6 +36,11 @@ class Monitor extends React.Component {
       this.setState({ lastUpdate: res.lastUpdate })
       this.refreshPrinters(res.printers);
     });
+  }
+
+  fetchPrinters = () => {
+    this.setState({ loading: true })
+    this.socket.emit('get', (this.state.selectedLocation));
   }
 
   refreshPrinters = (printers) => {
@@ -68,11 +62,18 @@ class Monitor extends React.Component {
     this.socket.emit('refresh');
   };
 
+  handleDropdownSelection = (newSubscription) => {
+    this.setState({ printers: [], 
+                    loading: true,
+                    selectedLocation: newSubscription });
+    this.socket.emit('sub change', (newSubscription));
+  }
+
   render(){
     return (
       <div>
-        <MonitorHead lastUpdate={this.state.lastUpdate} handleRefresh={this.handleRefresh}/>
-        <Printers printers={this.state.printers} loading={this.state.loading} />
+        <MonitorHead lastUpdate={this.state.lastUpdate} handleRefresh={this.handleRefresh} selectedLocation={this.state.selectedLocation} handleDropdownSelection={this.handleDropdownSelection}/>
+        <Printers printers={this.state.printers} loading={this.state.loading} selectedLocation={this.state.selectedLocation}/>
       </div>
     );
   }
