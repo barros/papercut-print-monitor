@@ -52,8 +52,8 @@ class MonitorHead extends React.Component {
             <DropdownMenu>
               <DropdownItem header>Locations</DropdownItem>
               <DropdownItem divider />
-              <DropdownItem id={0} onClick={this.select} disabled={(this.isOptionDisabled(0))}>All Locations</DropdownItem>
-              <DropdownItem id={1} onClick={this.select} disabled={(this.isOptionDisabled(1))}>O'Neill Library</DropdownItem>
+              <DropdownItem id={0} onClick={this.select}>All Locations</DropdownItem>
+              <DropdownItem id={1} onClick={this.select}>O'Neill Library</DropdownItem>
             </DropdownMenu>
           </ButtonDropdown>
         </div>
