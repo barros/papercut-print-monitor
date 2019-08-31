@@ -62,11 +62,16 @@ class Monitor extends React.Component {
     this.socket.emit('refresh');
   };
 
-  handleDropdownSelection = (newSubscription) => {
+  handleDropdownSelection = (prevSub, newSub) => {
+    const subscriptionData = {
+      prevSub: prevSub,
+      newSub: newSub
+    };
     this.setState({ printers: [], 
                     loading: true,
-                    selectedLocation: newSubscription });
-    this.socket.emit('sub change', (newSubscription));
+                    selectedLocation: newSub });
+    console.log('handle new sub: ' + newSub);
+    this.socket.emit('sub change', (subscriptionData));
   }
 
   render(){

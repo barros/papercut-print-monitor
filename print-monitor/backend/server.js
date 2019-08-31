@@ -96,14 +96,15 @@ io.on('connection', (socket) => {
   });
 
   // Change subscription channel, occurs when a user changes location via button drop-down
-  socket.on('sub change', (newSubscription) => {
-    socket.leave('all locations');
-    const namespace = subscriptionNamespaces[newSubscription]
-    socket.join(namespace);
-    console.log(`Socket ID (${socket.id}) subscribed to ${namespace}`);
+  socket.on('sub change', (subscriptionData) => {
+    const oldNamespace = subscriptionNamespaces[subscriptionData.prevSub];
+    const newNamespace = subscriptionNamespaces[subscriptionData.newSub];
+    socket.leave(oldNamespace);
+    socket.join(newNamespace);
+    console.log(`Socket ID (${socket.id}) subscribed to ${newNamespace}`);
 
     // Update the socket the printers of their new subscription
-    emitToSocket(newSubscription, socket.id);
+    emitToSocket(subscriptionData.newSub, socket.id);
   });
 
   // Disconnection removes socket from location namespace

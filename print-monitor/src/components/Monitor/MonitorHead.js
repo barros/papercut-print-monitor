@@ -7,11 +7,12 @@ class MonitorHead extends React.Component {
     this.state = ({ lastUpdate: null,
                     dropdownOpen: false,
                     currentLocation: null,
-                    dropdownItemPressed: null });
+                    dropdownItemPressed: null,
+                    dropdownValue: 'Select Location' });
   }
 
   componentWillReceiveProps(nextProps){
-    if (nextProps.lastUpdate !== this.props.lastUpdate) {
+    if (nextProps.lastUpdate !== this.props.lastUpdate || nextProps.currentLocation !== this.props.currentLocation) {
       this.setState({ lastUpdate: nextProps.lastUpdate,
                       currentLocation: nextProps.selectedLocation});
     }
@@ -22,8 +23,14 @@ class MonitorHead extends React.Component {
   };
 
   select = (event) => {
+    const prevSub = this.state.currentLocation;
     const newSub = event.target.id;
-    this.props.handleDropdownSelection(newSub);
+    this.setState({ dropdownValue: event.target.innerText });
+    this.props.handleDropdownSelection(prevSub, newSub);
+  }
+
+  isOptionDisabled = (id) => {
+    return (id === this.state.currentLocation);
   }
 
   render(){
@@ -41,14 +48,12 @@ class MonitorHead extends React.Component {
         <Button onClick={this.props.handleRefresh} color="primary" style={{marginTop: "15px"}}>Refresh Monitor</Button>
         <div style={{marginTop: '5px', marginBottom: '10px'}}>
           <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle}>
-            <DropdownToggle caret>
-              Select a Location
-            </DropdownToggle>
+            <DropdownToggle caret>{this.state.dropdownValue}</DropdownToggle>
             <DropdownMenu>
               <DropdownItem header>Locations</DropdownItem>
               <DropdownItem divider />
-              <DropdownItem id={0} onClick={this.select} disabled>All Locations</DropdownItem>
-              <DropdownItem id={1} onClick={this.select}>O'Neill Library</DropdownItem>
+              <DropdownItem id={0} onClick={this.select} disabled={(this.isOptionDisabled(0))}>All Locations</DropdownItem>
+              <DropdownItem id={1} onClick={this.select} disabled={(this.isOptionDisabled(1))}>O'Neill Library</DropdownItem>
             </DropdownMenu>
           </ButtonDropdown>
         </div>
