@@ -122,13 +122,15 @@ async function switchChannels(socket, oldChannel, newChannel){
 
 // Emit specific location printers to specific socket
 function emitToSocket(locID, socketID){
+  console.log(`Emitting the '${subscriptionChannels[locID]}' printers to socket ${socketID}`);
   if (locID==0){ // Query all locations
     collection.find({}).toArray(function(err, result) {
       if (err) throw err;
       io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
     });
-  } else if (locID==1){ //  // Query O'Neill Library
-    collection.find({ "name" : { $regex : "oneill" } }).toArray(function(err, result) {
+  } else { // Query locations based on regex
+    let regex = subscriptionChannels[locID];
+    collection.find({ 'name' : { $regex : regex } }).toArray(function(err, result) {
       if (err) throw err;
       io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
     });
