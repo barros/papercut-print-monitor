@@ -13,17 +13,18 @@ The web app connects to the backend that handles the data regarding printer stat
 #### High Priority
 
 - Backend
-  - add web socket functionality to update front-end statuses in real-time
+  - add web socket functionality to update front-end statuses in real-time ☑️
   - create function interval for record updates ☑️
   - create server, database ☑️
   - the backend will connect to the PaperCut API on a set interval and add new printers, update current printers on the database ☑️
 - Front-end
+  - fetch location names from the server rather than having them hard-coded in react app
   - fetch printer statuses from backend ☑️
-  - create individual printer components
+  - create individual printer components ☑️
 
 #### Low Priority
 
-- filter printers by locations
+- filter printers by locations ☑️
 
 ***
 
