@@ -51,7 +51,7 @@ class Monitor extends React.Component {
     this.setState({ loading: false,
                     printers: updatedPrinters });
     const testPrinters = this.state.printers;
-    console.log(`testing state.lastUpdate: ${this.state.lastUpdate}`)
+    console.log(`Last server update: ${this.state.lastUpdate}`)
     testPrinters.forEach(printer => {
       console.log(printer);
     });
@@ -70,7 +70,6 @@ class Monitor extends React.Component {
     this.setState({ printers: [], 
                     loading: true,
                     selectedLocation: newSub });
-    console.log('handle new sub: ' + newSub);
     this.socket.emit('sub change', (subscriptionData));
   }
 

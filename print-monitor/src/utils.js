@@ -78,8 +78,8 @@ function getIconColor(badge){
 
 function getFullLocation(id){
   const locations = {
-    0: 'All Printers',
-    1: 'O\'Neill Library'
+    0: 'All On-Campus PaperCut Locations',
+    1: 'O\'Neill Library Printers'
   };
 
   if (!locations[id]){

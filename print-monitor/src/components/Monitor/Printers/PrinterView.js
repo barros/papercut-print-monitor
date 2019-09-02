@@ -37,7 +37,7 @@ class PrinterView extends React.Component {
                 {iconJSX}
               </div>
               <div style={{fontSize: '13pt'}}>{this.props.printer.name}</div>
-              <div style={{bottom: 0, right: 5, paddingTop: '5px', fontSize: '22pt', lineHeight: '30px'}}>{body}</div>
+              <div style={{bottom: 0, right: 5, paddingTop: '5px', fontSize: '22pt', lineHeight: '30px', textAlign: 'right'}}>{body}</div>
             </div>);
   }
 }

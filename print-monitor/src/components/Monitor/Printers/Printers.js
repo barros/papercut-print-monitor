@@ -2,6 +2,8 @@ import React from 'react';
 import { Spinner } from 'reactstrap';
 import PrinterView from './PrinterView';
 
+import utils from '../../../utils';
+
 class Printers extends React.Component {
   constructor(props) {
     super(props);
@@ -22,6 +24,7 @@ class Printers extends React.Component {
     let spinnerJSX;
     // List that will be updated with printer statuses
     let printerJSX = [];
+    let locationDiv = <h2>{utils.getFullLocation(this.props.selectedLocation)}</h2>
     if (this.state.printers){
       this.state.printers.forEach(printer => {
         printerJSX.push(<PrinterView key={ printer._id } printer={ printer } style={{margin: 'auto', position: 'absolute'}} />);
@@ -33,10 +36,12 @@ class Printers extends React.Component {
       spinnerJSX = ""
     }
     return (
-      <div style={{position: 'relative', paddingBottom:"20px", marginLeft: '30px', marginRight: '30px'}}>
+      <div style={{position: 'relative', marginTop: '10px', paddingBottom: '20px', marginLeft: '30px', marginRight: '30px', textAlign: 'center'}}>
+        {locationDiv}
+        <hr className="my-2" style={{paddingBottom:'25px'}}/>
         <div>
           {spinnerJSX}
-          <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around'}}>{printerJSX}</div>
+          <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', textAlign: 'left'}}>{printerJSX}</div>
         </div>
       </div>
     );
