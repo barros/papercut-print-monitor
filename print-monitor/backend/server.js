@@ -18,8 +18,8 @@ const DATABASE_NAME = 'test';
 var database, collection, batch;
 const port = 5000;
 var lastPrinterUpdate;
-// Location ID: Socket Namespace mapping
-const subscriptionNamespaces = {
+// Location ID: Socket Channel mapping
+const subscriptionChannels = {
   0: 'all locations',
   1: 'oneill'
 };
@@ -97,17 +97,16 @@ io.on('connection', (socket) => {
 
   // Change subscription channel, occurs when a user changes location via button drop-down
   socket.on('sub change', (subscriptionData) => {
-    const oldNamespace = subscriptionNamespaces[subscriptionData.prevSub];
-    const newNamespace = subscriptionNamespaces[subscriptionData.newSub];
-    socket.leave(oldNamespace);
-    socket.join(newNamespace);
-    console.log(`Socket ID (${socket.id}) subscribed to ${newNamespace}`);
+    const oldChannel = subscriptionChannels[subscriptionData.prevSub];
+    const newChannel = subscriptionChannels[subscriptionData.newSub];
+    switchChannels(socket, oldChannel, newChannel);
+    console.log(`Socket ID (${socket.id}) subscribed to ${newChannel} (left channel '${oldChannel}')`);
 
     // Update the socket the printers of their new subscription
     emitToSocket(subscriptionData.newSub, socket.id);
   });
 
-  // Disconnection removes socket from location namespace
+  // Disconnection removes socket from subscription channel
   socket.on('disconnect', () => {
     console.log(`Socket ID (${socket.id}) disconnected`);
   });
@@ -115,6 +114,11 @@ io.on('connection', (socket) => {
 /*
 ----------------------------------------------------------
 */
+
+async function switchChannels(socket, oldChannel, newChannel){
+  await socket.leave(oldChannel);
+  socket.join(newChannel);
+}
 
 // Emit specific location printers to specific socket
 function emitToSocket(locID, socketID){
@@ -166,26 +170,29 @@ function updateDB(data){
     console.log('Update completed at: ' + new Date());
     lastPrinterUpdate = new Date();
     console.log(`Bulk operation result: ${result}`);
-    // Emit updates to socket clients, begins with namespace 'all locations'
-    updateSocketClients(0);
+    // Emit updates to socket clients, begins with channel 'all locations'
+    updateAllChannels();
   });
   batch = collection.initializeUnorderedBulkOp();
 }
 
 // Update sockets with their respective subscriptions
-function updateSocketClients(currentLocID){
-  console.log(`Updating socket namespace: ${subscriptionNamespaces[currentLocID]}`);
-  if (currentLocID==0){
-    collection.find({}).toArray(function(err, result) {
-      if (err) throw err;
-      io.to('all locations').emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
-      updateSocketClients(++currentLocID);
-    });
-  } else if (currentLocID==1){
-    collection.find({ "name" : { $regex : "oneill" } }).toArray(function(err, result) {
-      if (err) throw err;
-      io.to('oneill').emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
-    });
+function updateAllChannels(currentLocID=0){
+  if (currentLocID<Object.keys(subscriptionChannels).length){
+    console.log(`Updating subscription channel: ${subscriptionChannels[currentLocID]}`);
+    if (currentLocID==0){
+      collection.find({}).toArray(function(err, result) {
+        if (err) throw err;
+        io.to('all locations').emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+        updateAllChannels(++currentLocID);
+      });
+    } else {
+      let regex = subscriptionChannels[currentLocID];
+      collection.find({ 'name' : { $regex : regex } }).toArray(function(err, result) {
+        if (err) throw err;
+        io.to(regex).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+        updateAllChannels(++currentLocID);
+      });
+    }
   }
-  return;
 }
