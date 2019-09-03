@@ -4,16 +4,14 @@ import { Jumbotron, Button, Alert, ButtonDropdown, DropdownToggle, DropdownMenu,
 class MonitorHead extends React.Component {
   constructor(props){
     super(props);
-    this.state = ({ lastUpdate: null,
-                    dropdownOpen: false,
+    this.state = ({ dropdownOpen: false,
                     currentLocation: null,
-                    dropdownItemPressed: null,
                     dropdownValue: 'Select Location' });
   }
 
   componentWillReceiveProps(nextProps){
-    if (nextProps.lastUpdate !== this.props.lastUpdate) {
-      this.setState({ lastUpdate: nextProps.lastUpdate });
+    if (nextProps !== this.props) {
+      this.setState({ currentLocation: nextProps.selectedLocation });
     }
   }
 
@@ -29,15 +27,20 @@ class MonitorHead extends React.Component {
     this.props.handleDropdownSelection(prevSub, newSub);
   }
 
-  isOptionDisabled = (id) => {
-    return (id === this.state.currentLocation);
-  }
-
   render(){
     let lastUpdateJSX;
-    if (this.state.lastUpdate){
-      var lastUpdateText = new Date(this.state.lastUpdate).toLocaleString()
+    if (this.props.lastUpdate){
+      var lastUpdateText = new Date(this.props.lastUpdate).toLocaleString();
       lastUpdateJSX = <Alert color='primary'>Last Updated at: <strong>{lastUpdateText}</strong></Alert>;
+    }
+
+    let dropdownItems = [];
+    if (this.props.locations){
+      this.props.locations.forEach((location, index) => {
+        dropdownItems.push(
+          <DropdownItem key={index} id={index} onClick={this.select}>{location.shortName}</DropdownItem>
+        );
+      });
     }
 
     return (
@@ -52,8 +55,9 @@ class MonitorHead extends React.Component {
             <DropdownMenu>
               <DropdownItem header>Locations</DropdownItem>
               <DropdownItem divider />
-              <DropdownItem id={0} onClick={this.select}>All Locations</DropdownItem>
-              <DropdownItem id={1} onClick={this.select}>O'Neill Library</DropdownItem>
+              {dropdownItems}
+              {/* <DropdownItem id={0} onClick={this.select}>All Locations</DropdownItem>
+              <DropdownItem id={1} onClick={this.select}>O'Neill Library</DropdownItem> */}
             </DropdownMenu>
           </ButtonDropdown>
         </div>

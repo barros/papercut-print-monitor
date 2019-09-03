@@ -2,35 +2,25 @@ import React from 'react';
 import { Spinner } from 'reactstrap';
 import PrinterView from './PrinterView';
 
-import utils from '../../../utils';
-
 class Printers extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = ({
-      printers: [],
-      loading: false
-    });
-  }
-  
-  componentWillReceiveProps(nextProps){
-    if (nextProps !== this.props) {
-      this.setState({ printers: nextProps.printers,
-                      loading: nextProps.loading });
-    }
-  }
-
   render() {
     let spinnerJSX;
     // List that will be updated with printer statuses
     let printerJSX = [];
-    let locationDiv = <h2>{utils.getFullLocation(this.props.selectedLocation)}</h2>
-    if (this.state.printers){
-      this.state.printers.forEach(printer => {
+    
+    let locationDiv;
+    if (this.props.selectedLocation){
+      console.log(`location: ${this.props.selectedLocation}`)
+      locationDiv = <h2>{this.props.selectedLocation.display}</h2>
+    }
+
+    if (this.props.printers){
+      this.props.printers.forEach(printer => {
         printerJSX.push(<PrinterView key={ printer._id } printer={ printer } style={{margin: 'auto', position: 'absolute'}} />);
       });
     }
-    if (this.state.loading) {
+
+    if (this.props.loading) {
       spinnerJSX = <Spinner color="info"/>
     } else {
       spinnerJSX = ""

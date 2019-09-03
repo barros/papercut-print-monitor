@@ -1,0 +1,14 @@
+{
+  "locations": {
+    "0": {
+      "display": "All On-Campus PaperCut Locations",
+      "shortName": "All Locations",
+      "regex": "all locations"
+    },
+    "1": {
+      "display": "O'Neill Library Printers",
+      "shortName": "O'Neill Library",
+      "regex": "oneill"
+    }
+  }
+}
