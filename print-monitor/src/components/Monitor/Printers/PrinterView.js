@@ -6,10 +6,6 @@ import Error from '@material-ui/icons/Error';
 import utils from '../../../utils';
 
 class PrinterView extends React.Component {
-  constructor(props){
-    super(props);
-  }
-
   render(){
     var iconJSX;
     const badgeText = utils.getBadge(this.props.printer.status);

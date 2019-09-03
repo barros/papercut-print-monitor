@@ -1,14 +1,11 @@
 import dotenv from 'dotenv';
 import React from 'react';
-import axios from 'axios';
 import socketIOClient from 'socket.io-client';
 
 import MonitorHead from "./MonitorHead";
 import Printers from "./Printers/Printers";
 
 dotenv.config();
-
-var apiPath = `${process.env.REACT_APP_API_DOMAIN}/printers`
 
 class Monitor extends React.Component {
   constructor(props){
