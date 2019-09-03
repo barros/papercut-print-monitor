@@ -12,9 +12,8 @@ class MonitorHead extends React.Component {
   }
 
   componentWillReceiveProps(nextProps){
-    if (nextProps.lastUpdate !== this.props.lastUpdate || nextProps.currentLocation !== this.props.currentLocation) {
-      this.setState({ lastUpdate: nextProps.lastUpdate,
-                      currentLocation: nextProps.selectedLocation});
+    if (nextProps.lastUpdate !== this.props.lastUpdate) {
+      this.setState({ lastUpdate: nextProps.lastUpdate });
     }
   }
 
@@ -25,7 +24,8 @@ class MonitorHead extends React.Component {
   select = (event) => {
     const prevSub = this.state.currentLocation;
     const newSub = event.target.id;
-    this.setState({ dropdownValue: event.target.innerText });
+    this.setState({ dropdownValue: event.target.innerText,
+                    currentLocation: newSub });
     this.props.handleDropdownSelection(prevSub, newSub);
   }
 
