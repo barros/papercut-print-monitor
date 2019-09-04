@@ -38,7 +38,7 @@ class MonitorHead extends React.Component {
     if (this.props.locations){
       this.props.locations.forEach((location, index) => {
         dropdownItems.push(
-          <DropdownItem key={index} id={index} onClick={this.select}>{location.shortName}</DropdownItem>
+          <DropdownItem key={index} id={index} onClick={this.select}>{location.dropdownText}</DropdownItem>
         );
       });
     }

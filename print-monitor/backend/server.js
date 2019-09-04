@@ -1,5 +1,6 @@
 require('dotenv').config({path:'../.env'});
 var express = require('express');
+var https = require('https');
 const BodyParser = require('body-parser');
 var app = express();
 const server = require('http').createServer(app); // server instance
@@ -12,14 +13,21 @@ const MongoClient = require("mongodb").MongoClient;
 const ObjectId = require("mongodb").ObjectID;
 
 // Global Variables
+const environment = 'production' // 'production' for pinging PaperCut production server, 'development' for test server
+
 const CONNECTION_URL = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@papercut-test-o3cqg.mongodb.net/test?retryWrites=true&w=majority`;
-const DATABASE_NAME = 'test';
+const DATABASE_NAME = environment == 'production' ? 'prod' : 'test'; // = 'prod' for production database, 'test' for development database
 var database, collection, batch;
 var lastPrinterUpdate;
 // Import JSON that holds the information regarding printer locations
 
 const subscriptionChannels = require('./locations.json').locations;
-const paperCutAPIPath = `${process.env.PAPERCUT_API_URL}/health/printers?Authorization=${process.env.PAPERCUT_API_KEY}`;
+
+// PaperCut API path
+const
+  apiDomain = environment == 'production' ? process.env.PAPERCUT_PROD_API_DOMAIN : process.env.PAPERCUT_DEV_API_DOMAIN;
+  apiKey = environment == 'production' ? process.env.PAPERCUT_PROD_API_KEY : process.env.PAPERCUT_DEV_API_KEY;
+  paperCutAPIPath = `${apiDomain}api/health/printers?Authorization=${apiKey}`;
 
 // Middleware
 app.use(function (req, res, next) {
@@ -50,13 +58,13 @@ server.listen(port, () => {
           console.log(error);
         }
         database = client.db(DATABASE_NAME);
-        collection = database.collection("printers");
+        collection = database.collection('printers');
         /*
           Add the printers to DB in a batch so that there can be one callback when data is inserted/updated
           Callback would only work for each collection.updateOne call
         */
         batch = collection.initializeUnorderedBulkOp();
-        console.log("Connected to `" + DATABASE_NAME + "`");
+        console.log(`Connected to database: ${DATABASE_NAME}`);
       });
       break;
     } catch(err){
@@ -78,13 +86,13 @@ server.listen(port, () => {
   Socket Handling
 */
 io.on('connection', (socket) => {
-  console.log(`Socket ID (${socket.id}) connected`)
+  console.log(`Socket ID (${socket.id}) connected`);
   socket.join('all locations');
   var locations = [];
   for (i in subscriptionChannels){
     const location = {
-                    display: subscriptionChannels[i].display,
-                    shortName: subscriptionChannels[i].shortName
+                    name: subscriptionChannels[i].name,
+                    dropdownText: subscriptionChannels[i].dropdownText
                   }
     locations.push(location);
   }
@@ -102,8 +110,8 @@ io.on('connection', (socket) => {
 
   // Change subscription channel, occurs when a user changes location via button drop-down
   socket.on('sub change', (subscriptionData) => {
-    const oldChannel = subscriptionChannels[subscriptionData.prevSub].regex;
-    const newChannel = subscriptionChannels[subscriptionData.newSub].regex;
+    const oldChannel = subscriptionChannels[subscriptionData.prevSub].channel;
+    const newChannel = subscriptionChannels[subscriptionData.newSub].channel;
     switchChannels(socket, oldChannel, newChannel);
     console.log(`Socket ID (${socket.id}) subscribed to ${newChannel} (left channel '${oldChannel}')`);
 
@@ -127,14 +135,14 @@ async function switchChannels(socket, oldChannel, newChannel){
 
 // Emit specific location printers to specific socket
 function emitToSocket(locID, socketID){
-  console.log(`Emitting '${subscriptionChannels[locID].name}' printers to socket ${socketID}`);
+  console.log(`Emitting '${subscriptionChannels[locID].channel}' printers to socket ${socketID}`);
   if (locID==0){ // Query all locations
     collection.find({}).toArray(function(err, result) {
       if (err) throw err;
       io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
     });
-  } else { // Query locations based on regex
-    let regex = subscriptionChannels[locID].regex;
+  } else { // Query locations using channel name
+    let regex = subscriptionChannels[locID].channel;
     collection.find({ 'name' : { $regex : regex } }).toArray(function(err, result) {
       if (err) throw err;
       io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
@@ -144,30 +152,37 @@ function emitToSocket(locID, socketID){
 
 // Request printer statuses from PaperCut API then update MongoDB
 function requestPaperCutStatus(){
-  axios.get(paperCutAPIPath)
+  // add HTTPS agent to ignore SSL error
+   const agent = new https.Agent({  
+    rejectUnauthorized: false
+  });
+  axios.get(paperCutAPIPath, { httpsAgent: agent })
   .then(res => updateDB(res.data))
-  .catch(err=>console.log(err));
+  .catch(err => console.log(err));
 }
 
 // Insert/Update printers received from PaperCut API to MongoDB database
 function updateDB(data){
   const retreived = data.printers;
   retreived.forEach(printer => {
-    // Remove the 'four' server name that is prepended to all BC PaperCut printers
-    var printerName = printer.name.replace('four\\', '');
+    // Remove the hostname from server name that is prepended to all BC PaperCut printers
+    const hostname = environment == 'production' ? 'bcprint' : 'four';
+    // hostname = 'four' for testpapercut.bc.edu
+    // hostname = 'bcprint' for bcprint.bc.edu
+    const printerName = printer.name.replace((hostname+'\\'), '');
 
     // Record to push to database
-    let record = {
+    const record = {
       'name': printerName,
       'status': printer.status,
       'lastModified': new Date()
-    }
+    };
 
-    var query = { name: printerName };
-    var data = { $set: record };
+    const query = { name: printerName };
+    const data = { $set: record };
     
     // Call 'upsert()' so that printers that exist on DB get updated and those that don't get added
-    batch.find(query).upsert().update(data)
+    batch.find(query).upsert().update(data);
   });
   batch.execute((err, result) => {
     if (err){
@@ -186,7 +201,7 @@ function updateDB(data){
 // Update sockets with their respective subscriptions
 function updateAllChannels(currentLocID=0){
   if (currentLocID<Object.keys(subscriptionChannels).length){
-    console.log(`Updating subscription channel: ${subscriptionChannels[currentLocID].regex}`);
+    console.log(`Updating subscription channel: ${subscriptionChannels[currentLocID].channel}`);
     if (currentLocID==0){
       collection.find({}).toArray(function(err, result) {
         if (err) throw err;
@@ -194,7 +209,7 @@ function updateAllChannels(currentLocID=0){
         updateAllChannels(++currentLocID);
       });
     } else {
-      let regex = subscriptionChannels[currentLocID].regex;
+      let regex = subscriptionChannels[currentLocID].channel;
       collection.find({ 'name' : { $regex : regex } }).toArray(function(err, result) {
         if (err) throw err;
         io.to(regex).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
