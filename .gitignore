@@ -1,3 +1,6 @@
 # dependencies
 /node_modules
+
+# misc
 notes.md
+.DS_Store
