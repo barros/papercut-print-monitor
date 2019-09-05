@@ -11,7 +11,7 @@ class Printers extends React.Component {
     let locationDiv;
     if (this.props.selectedLocation){
       console.log(`location: ${this.props.selectedLocation}`)
-      locationDiv = <h2>{this.props.selectedLocation.name} Printers</h2>
+      locationDiv = <h2 style={{fontFamily: 'Montserrat'}}>{this.props.selectedLocation.name} Printers</h2>
     }
 
     if (this.props.printers){

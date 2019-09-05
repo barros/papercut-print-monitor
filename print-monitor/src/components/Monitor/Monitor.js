@@ -82,7 +82,7 @@ class Monitor extends React.Component {
     }
 
     return (
-      <div>
+      <div style={{flex: 1}}>
         <MonitorHead lastUpdate={this.state.lastUpdate} locations={this.state.locations} handleRefresh={this.handleRefresh} selectedLocation={this.state.selectedLocation} handleDropdownSelection={this.handleDropdownSelection}/>
         <Printers printers={this.state.printers} loading={this.state.loading} selectedLocation={selectedLocation}/>
       </div>

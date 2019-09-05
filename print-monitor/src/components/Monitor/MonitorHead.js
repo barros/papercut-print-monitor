@@ -45,12 +45,12 @@ class MonitorHead extends React.Component {
 
     return (
       <Jumbotron style={{textAlign: "center", paddingTop: "20px", paddingBottom: "15px"}}>
-        <h1 className="display-4">PaperCut Print Monitor</h1>
-        <p className="lead">Below is the status of the PaperCut Release Station printers</p>
+        <h1 className="display-4" style={{fontFamily: 'Montserrat'}}>PaperCut Print Monitor</h1>
+        <p className="lead">Below are the statuses of the PaperCut Release Station printers</p>
         <hr className="my-2" />
-        <Button onClick={this.props.handleRefresh} color="primary" style={{marginTop: "15px"}}>Refresh Monitor</Button>
+        <Button onClick={this.props.handleRefresh} color="primary" style={{marginTop: "15px", fontFamily: 'Raleway', fontWeight: 'bold'}}>Refresh Monitor</Button>
         <div style={{marginTop: '5px', marginBottom: '10px'}}>
-          <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle}>
+          <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle} style={{fontFamily: 'Raleway'}}>
             <DropdownToggle caret>{this.state.dropdownValue}</DropdownToggle>
             <DropdownMenu>
               <DropdownItem header>Locations</DropdownItem>

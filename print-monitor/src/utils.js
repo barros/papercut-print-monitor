@@ -1,6 +1,6 @@
 function getStatus(dbStatus){
   const statuses = {
-    'OK': 'All good!',
+    'OK': 'All good',
     'PAPER_JAM': 'Paper Jam!',
     'PAPER_OUT': 'Out of Paper!',
     'PAPER_PROBLEM': 'There\'s a paper problem',
