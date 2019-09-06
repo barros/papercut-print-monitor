@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, FormText, Label, Input } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, FormText, FormFeedback, Label, Input } from 'reactstrap';
 import axios from 'axios';
 
 const api = process.env.REACT_APP_API_DOMAIN;
@@ -10,6 +10,8 @@ class ReportBugModal extends React.Component {
     this.state = ({ bugDescription: '',
                     replicationSteps: '',
                     email: '',
+                    emailValid: null,
+                    emailInvalid: null,
                     disabled: true });
   }
 
@@ -28,17 +30,26 @@ class ReportBugModal extends React.Component {
     this.setState({ replicationSteps: e.target.value} );
   }
   updateEmail = (e) => {
-    this.setState({ email: e.target.value} );
+    let email = e.target.value;
+    this.setState({ email: email, emailValid: this.validEmail(email), emailInvalid: null });
   }
   // --------------------------------
 
   // POST bug to server endpoint which will then send an email about the bug
   postBug = () => {
-    this.toggle();
+    if (this.state.email !== ''){
+      if (this.state.emailValid){
+        this.toggle();
+      } else {
+        this.setState({ emailInvalid: true });
+      }
+    } else {
+      this.toggle();
+    }
   }
 
   toggle = () => {
-    this.setState({ bugDescription: '', replicationSteps: '', disabled: true });
+    this.setState({ bugDescription: '', replicationSteps: '', emailValid: null, disabled: true });
     this.props.toggleBugModal();
   }
 
@@ -47,18 +58,23 @@ class ReportBugModal extends React.Component {
     return this.state.disabled;
   }
 
+  validEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)
+  }
+
   render() {
     return (
       <div>
         <Modal isOpen={this.props.reportBug} toggle={this.toggle} centered={true}>
-          <ModalHeader toggle={this.toggle}>Report a Bug</ModalHeader>
+          <ModalHeader toggle={this.toggle}>Report an Issue</ModalHeader>
           <ModalBody>
             Enter the details about the bug you've found below
           </ModalBody>
           <Form style={{marginLeft: '10px', marginRight: '10px'}}>
             <FormGroup>
               <Label for="email">Email</Label>
-              <Input placeholder="Email Address" onChange={this.updateEmail}/>
+              <Input valid={this.state.emailValid} invalid={this.state.emailInvalid} placeholder="Email Address" onChange={this.updateEmail}/>
+              <FormFeedback>{this.state.emailInvalid ? 'Please enter a valid email address' : ''}</FormFeedback>
               <FormText>Just in case we need more info about the issue</FormText>
             </FormGroup>
             <hr className="my-2" />
