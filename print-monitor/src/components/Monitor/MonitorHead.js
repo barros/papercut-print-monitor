@@ -4,15 +4,7 @@ import { Jumbotron, Button, Alert, ButtonDropdown, DropdownToggle, DropdownMenu,
 class MonitorHead extends React.Component {
   constructor(props){
     super(props);
-    this.state = ({ dropdownOpen: false,
-                    currentLocation: null,
-                    dropdownValue: 'Select Location' });
-  }
-
-  componentWillReceiveProps(nextProps){
-    if (nextProps !== this.props) {
-      this.setState({ currentLocation: nextProps.selectedLocation });
-    }
+    this.state = ({ dropdownOpen: false });
   }
 
   toggle = () => {
@@ -20,11 +12,11 @@ class MonitorHead extends React.Component {
   };
 
   select = (event) => {
-    const prevSub = this.state.currentLocation;
-    const newSub = event.target.id;
+    const prevLocID = this.props.selectedLocationID;
+    const newLocID = event.target.id;
     this.setState({ dropdownValue: event.target.innerText,
-                    currentLocation: newSub });
-    this.props.handleDropdownSelection(prevSub, newSub);
+                    currentLocationID: newLocID });
+    this.props.handleDropdownSelection(prevLocID, newLocID);
   }
 
   render(){
@@ -35,7 +27,12 @@ class MonitorHead extends React.Component {
     }
 
     let dropdownItems = [];
+    // Current location to be displayed as dropdown value
+    let dropdownValue;
     if (this.props.locations){
+      let currentLocation = this.props.locations[this.props.selectedLocationID]
+      dropdownValue = currentLocation.dropdownText;
+
       this.props.locations.forEach((location, index) => {
         dropdownItems.push(
           <DropdownItem key={index} id={index} onClick={this.select}>{location.dropdownText}</DropdownItem>
@@ -51,13 +48,11 @@ class MonitorHead extends React.Component {
         <Button onClick={this.props.handleRefresh} color="primary" style={{marginTop: "15px", fontFamily: 'Raleway', fontWeight: 'bold'}}>Refresh Monitor</Button>
         <div style={{marginTop: '5px', marginBottom: '10px'}}>
           <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle} style={{fontFamily: 'Raleway'}}>
-            <DropdownToggle caret>{this.state.dropdownValue}</DropdownToggle>
+            <DropdownToggle caret>{dropdownValue}</DropdownToggle>
             <DropdownMenu>
               <DropdownItem header>Locations</DropdownItem>
               <DropdownItem divider />
               {dropdownItems}
-              {/* <DropdownItem id={0} onClick={this.select}>All Locations</DropdownItem>
-              <DropdownItem id={1} onClick={this.select}>O'Neill Library</DropdownItem> */}
             </DropdownMenu>
           </ButtonDropdown>
         </div>
