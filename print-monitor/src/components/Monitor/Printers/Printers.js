@@ -16,9 +16,9 @@ class Printers extends React.Component {
     }
     
     let locationDiv;
-    if (this.props.selectedLocation){
+    if (this.props.currentLocation){
       locationDiv = <div>
-                      <h2 style={{fontFamily: 'Montserrat'}}>{this.props.selectedLocation.name} Printers</h2>
+                      <h2 style={{fontFamily: 'Montserrat'}}>{this.props.currentLocation.name} Printers</h2>
                       <hr className="my-2" style={{paddingBottom:'25px'}}/>
                     </div>;
     }

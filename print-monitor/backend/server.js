@@ -82,12 +82,19 @@ server.listen(port, () => {
   console.log(`Backend API server is running on ${host}:${port}`);
 });
 
+// Endpoint for bug reporting
+app.post('/bug', function (req, res) {
+  res.send('POST request for bug')
+})
+
 /*
   Socket Handling
 */
 io.on('connection', (socket) => {
   console.log(`Socket ID (${socket.id}) connected`);
-  socket.join('all locations');
+  socket.join('all locations')
+
+  // Send locations to client on connection
   var locations = [];
   for (i in subscriptionChannels){
     const location = {
@@ -109,7 +116,7 @@ io.on('connection', (socket) => {
   });
 
   // Change subscription channel, occurs when a user changes location via button drop-down
-  socket.on('sub change', (subscriptionData) => {
+  socket.on('subscription change', (subscriptionData) => {
     const oldChannel = subscriptionChannels[subscriptionData.prevSub].channel;
     const newChannel = subscriptionChannels[subscriptionData.newSub].channel;
     switchChannels(socket, oldChannel, newChannel);
@@ -125,6 +132,7 @@ io.on('connection', (socket) => {
   });
 });
 /*
+  End of Socket Handling
 ----------------------------------------------------------
 */
 
@@ -139,13 +147,13 @@ function emitToSocket(locID, socketID){
   if (locID==0){ // Query all locations
     collection.find({}).toArray(function(err, result) {
       if (err) throw err;
-      io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+      io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate, locationID: locID });
     });
   } else { // Query locations using channel name
     let regex = subscriptionChannels[locID].channel;
     collection.find({ 'name' : { $regex : regex } }).toArray(function(err, result) {
       if (err) throw err;
-      io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+      io.to(socketID).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate, locationID: locID });
     });
   }
 }
@@ -186,8 +194,8 @@ function updateDB(data){
   });
   batch.execute((err, result) => {
     if (err){
-      console.log('ERROR IN MONGODB BULK OPERATION');
-      throw err;
+      console.log('ERROR IN MONGODB BULK OPERATION:');
+      console.log(err);
     }
     console.log('Update completed at: ' + new Date());
     lastPrinterUpdate = new Date();
@@ -205,14 +213,14 @@ function updateAllChannels(currentLocID=0){
     if (currentLocID==0){
       collection.find({}).toArray(function(err, result) {
         if (err) throw err;
-        io.to('all locations').emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+        io.to('all locations').emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate, locationID: currentLocID });
         updateAllChannels(++currentLocID);
       });
     } else {
       let regex = subscriptionChannels[currentLocID].channel;
       collection.find({ 'name' : { $regex : regex } }).toArray(function(err, result) {
         if (err) throw err;
-        io.to(regex).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate });
+        io.to(regex).emit('updated printers', { printers: result, lastUpdate: lastPrinterUpdate, locationID: currentLocID });
         updateAllChannels(++currentLocID);
       });
     }

@@ -14,10 +14,13 @@ class Monitor extends React.Component {
       lastUpdate: null,
       printers: [],
       locations: null,
-      selectedLocation: 0,
+      currentLocation: 0,
       loading: false
     });
     this.socket = socketIOClient(process.env.REACT_APP_API_DOMAIN, { secure: true });
+  }
+
+  componentWillMount(){
     this.connectSocket();
   }
 
@@ -29,31 +32,34 @@ class Monitor extends React.Component {
     this.socket.close();
   }
 
+  // Configure and set socket client endpoints
   connectSocket = () => {
     this.socket.on('updated printers', (res) => {
       this.setState({ lastUpdate: res.lastUpdate });
-      this.refreshPrinters(res.printers);
+      this.refreshPrinters(res.locationID, res.printers);
     });
     this.socket.on('locations', (res) => {
       this.setState({ locations: res.locations });
     });
   }
 
+  // Fetching & refreshing printer methods
   fetchPrinters = () => {
     this.setState({ loading: true })
-    this.socket.emit('get', (this.state.selectedLocation));
+    this.socket.emit('get', (this.state.currentLocation));
   }
 
-  refreshPrinters = (printers) => {
+  refreshPrinters = (locationID, printers) => {
     let updatedPrinters = [];
     printers.forEach(printer => {
       updatedPrinters.push(printer);
     });
     this.setState({ loading: false,
-                    printers: updatedPrinters });
+                    printers: updatedPrinters,
+                    currentLocation: locationID });
     const receivedPrinters = this.state.printers;
     console.log(`Last server update: ${this.state.lastUpdate}`);
-    console.log('Received the following printers:');
+    console.log(`Received the following printers from location - (${this.state.locations[locationID].name}):`);
     receivedPrinters.forEach(printer => {
       console.log(printer);
     });
@@ -64,27 +70,27 @@ class Monitor extends React.Component {
     this.socket.emit('refresh');
   };
 
-  handleDropdownSelection = (prevSub, newSub) => {
+  handleSubscriptionChange = (prevLocID, newLocID) => {
     const subscriptionData = {
-      prevSub: prevSub,
-      newSub: newSub
+      prevSub: prevLocID,
+      newSub: newLocID
     };
     this.setState({ printers: [], 
                     loading: true,
-                    selectedLocation: newSub });
-    this.socket.emit('sub change', (subscriptionData));
+                    currentLocation: newLocID });
+    this.socket.emit('subscription change', (subscriptionData));
   }
 
   render(){
-    let selectedLocation;
+    let currentLocation;
     if (this.state.locations){
-      selectedLocation = this.state.locations[this.state.selectedLocation];
+      currentLocation = this.state.locations[this.state.currentLocation];
     }
 
     return (
       <div style={{flex: 1}}>
-        <MonitorHead lastUpdate={this.state.lastUpdate} locations={this.state.locations} handleRefresh={this.handleRefresh} selectedLocation={this.state.selectedLocation} handleDropdownSelection={this.handleDropdownSelection}/>
-        <Printers printers={this.state.printers} loading={this.state.loading} selectedLocation={selectedLocation}/>
+        <MonitorHead lastUpdate={this.state.lastUpdate} locations={this.state.locations} handleRefresh={this.handleRefresh} selectedLocationID={this.state.currentLocation} handleDropdownSelection={this.handleSubscriptionChange}/>
+        <Printers printers={this.state.printers} loading={this.state.loading} currentLocation={currentLocation}/>
       </div>
     );
   }
