@@ -65,6 +65,7 @@ server.listen(port, () => {
         */
         batch = collection.initializeUnorderedBulkOp();
         console.log(`Connected to database: ${DATABASE_NAME}`);
+        startFetching();
       });
       break;
     } catch(err){
@@ -72,15 +73,15 @@ server.listen(port, () => {
       console.log('ERROR CONNECTING TO MONGODB: '+err);
     }
   }
-
-  // Give the server 2 seconds to connect to database before fetching and adding statuses
-  setTimeout(requestPaperCutStatus, 2000);
-
-  // Refresh and update printer statuses every minute
-  setInterval(requestPaperCutStatus, 60000);
-
   console.log(`Backend API server is running on ${host}:${port}`);
 });
+
+function startFetching() {
+  // First PaperCut API fetch
+  requestPaperCutStatus();
+  // Fetch printer statuses every minute
+  setInterval(requestPaperCutStatus, 60000);
+}
 
 // Endpoint for bug reporting
 app.post('/bug', function (req, res) {
