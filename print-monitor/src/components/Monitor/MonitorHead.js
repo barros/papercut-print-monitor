@@ -4,19 +4,29 @@ import { Jumbotron, Button, Alert, ButtonDropdown, DropdownToggle, DropdownMenu,
 class MonitorHead extends React.Component {
   constructor(props){
     super(props);
-    this.state = ({ dropdownOpen: false });
+    this.state = ({ locationDropdownOpen: false,
+                    filterDropdownOpen: false });
   }
 
-  toggle = () => {
-    this.setState({ dropdownOpen: !this.state.dropdownOpen });
+  toggleLocation = () => {
+    this.setState({ locationDropdownOpen: !this.state.locationDropdownOpen });
   };
 
-  select = (event) => {
+  toggleFilter = () => {
+    this.setState({ filterDropdownOpen: !this.state.filterDropdownOpen });
+  };
+
+  selectLocation = (event) => {
     const prevLocID = this.props.selectedLocationID;
     const newLocID = event.target.id;
-    this.setState({ dropdownValue: event.target.innerText,
+    this.setState({ locDropdownValue: event.target.innerText,
                     currentLocationID: newLocID });
-    this.props.handleDropdownSelection(prevLocID, newLocID);
+    this.props.handleLocationChange(prevLocID, newLocID);
+  }
+
+  selectFilter = (event) => {
+    this.props.handleFilterChange(event.target.innerText);
+
   }
 
   render(){
@@ -28,14 +38,14 @@ class MonitorHead extends React.Component {
 
     let dropdownItems = [];
     // Current location to be displayed as dropdown value
-    let dropdownValue;
+    let locDropdownValue;
     if (this.props.locations){
       let currentLocation = this.props.locations[this.props.selectedLocationID]
-      dropdownValue = currentLocation.dropdownText;
+      locDropdownValue = currentLocation.dropdownText;
 
       this.props.locations.forEach((location, index) => {
         dropdownItems.push(
-          <DropdownItem key={index} id={index} onClick={this.select}>{location.dropdownText}</DropdownItem>
+          <DropdownItem key={index} id={index} onClick={this.selectLocation}>{location.dropdownText}</DropdownItem>
         );
       });
     }
@@ -46,13 +56,28 @@ class MonitorHead extends React.Component {
         <p className="lead">Below are the statuses of the PaperCut Release Station printers</p>
         <hr className="my-2" />
         <Button onClick={this.props.handleRefresh} color="primary" style={{marginTop: "15px", fontFamily: 'Raleway', fontWeight: 'bold'}}>Refresh Monitor</Button>
-        <div style={{marginTop: '5px', marginBottom: '10px'}}>
-          <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle} style={{fontFamily: 'Raleway'}}>
-            <DropdownToggle caret>{dropdownValue}</DropdownToggle>
+        {/* Location dropdown menu below */}
+        <div style={{marginTop: '5px', marginBottom: '5px'}}>
+          <ButtonDropdown isOpen={this.state.locationDropdownOpen} toggle={this.toggleLocation} style={{fontFamily: 'Raleway'}}>
+            <DropdownToggle caret>{locDropdownValue}</DropdownToggle>
             <DropdownMenu>
               <DropdownItem header>Locations</DropdownItem>
               <DropdownItem divider />
               {dropdownItems}
+            </DropdownMenu>
+          </ButtonDropdown>
+        </div>
+        {/* Status filter dropdown menu below */}
+        <div style={{marginTop: '5px', marginBottom: '10px'}}>
+          <ButtonDropdown isOpen={this.state.filterDropdownOpen} toggle={this.toggleFilter} style={{fontFamily: 'Raleway'}}>
+            <DropdownToggle caret>{this.props.filter}</DropdownToggle>
+            <DropdownMenu>
+              <DropdownItem header>Filters</DropdownItem>
+              <DropdownItem divider />
+              <DropdownItem key={0} onClick={this.selectFilter}>All Statuses</DropdownItem>
+              <DropdownItem key={1} onClick={this.selectFilter}>Online</DropdownItem>
+              <DropdownItem key={2} onClick={this.selectFilter}>Needs Attention</DropdownItem>
+              <DropdownItem key={3} onClick={this.selectFilter}>Error</DropdownItem>
             </DropdownMenu>
           </ButtonDropdown>
         </div>

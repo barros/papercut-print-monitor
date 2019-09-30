@@ -8,7 +8,7 @@ import utils from '../../../utils';
 class PrinterView extends React.Component {
   render(){
     var iconJSX;
-    const badgeText = utils.getBadge(this.props.printer.status);
+    const badgeText = this.props.printer.badge;
     var style = { 
                   right:10,
                   position: 'absolute', 

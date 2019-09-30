@@ -13,6 +13,8 @@ class Monitor extends React.Component {
     this.state = ({
       lastUpdate: null,
       printers: [],
+      filter: 'All Statuses',
+      filteredPrinters: [],
       locations: null,
       currentLocation: 0,
       loading: false
@@ -57,16 +59,57 @@ class Monitor extends React.Component {
     this.setState({ loading: false,
                     printers: updatedPrinters,
                     currentLocation: locationID });
-    const receivedPrinters = this.state.printers;
+    this.filterPrinters(this.state.filter);
     console.log(`Last server update: ${this.state.lastUpdate}`);
     console.log(`Received the following printers from location - (${this.state.locations[locationID].name}):`);
-    receivedPrinters.forEach(printer => {
-      console.log(printer);
-    });
+    // receivedPrinters.forEach(printer => {
+    //   console.log(printer);
+    // });
+  }
+
+  filterPrinters = (filter) => {
+    this.setState({ loading: false, filterPrinters: [] });
+    let filteredArr = [];
+    switch (filter){
+      case 'All Statuses': {
+        this.setState({ filteredPrinters: this.state.printers });
+        break;
+      }
+      case 'Online': {
+        filteredArr = this.state.printers.filter(printer => {
+          return printer.badge==='ONLINE';
+        });
+        this.setState({ filteredPrinters: filteredArr });
+        break;
+      }
+      case 'Needs Attention': {
+        filteredArr = this.state.printers.filter(printer => {
+          return printer.badge==='OFFLINE' || printer.badge==='ATTENTION' || printer.badge==='UNAVAILABLE' || printer.badge==='UNKNOWN';
+        });
+        this.setState({ filteredPrinters: filteredArr });
+        break;
+      }
+      case 'Error': {
+        filteredArr = this.state.printers.filter(printer => {
+          return printer.badge==='ERROR';
+        });
+        this.setState({ filteredPrinters: filteredArr });
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+    this.setState({ loading: false });
+  }
+
+  handleFilterChange = (appliedFilter) => {
+    this.setState({ filter: appliedFilter });
+    this.filterPrinters(appliedFilter);
   }
 
   handleRefresh = () => {
-    this.setState({ printers: [], loading: true });
+    this.setState({ printers: [], filteredPrinters: [], loading: true });
     this.socket.emit('refresh');
   };
 
@@ -76,6 +119,7 @@ class Monitor extends React.Component {
       newSub: newLocID
     };
     this.setState({ printers: [], 
+                    filteredPrinters: [],
                     loading: true,
                     currentLocation: newLocID });
     this.socket.emit('subscription change', (subscriptionData));
@@ -89,8 +133,8 @@ class Monitor extends React.Component {
 
     return (
       <div style={{flex: 1}}>
-        <MonitorHead lastUpdate={this.state.lastUpdate} locations={this.state.locations} handleRefresh={this.handleRefresh} selectedLocationID={this.state.currentLocation} handleDropdownSelection={this.handleSubscriptionChange}/>
-        <Printers printers={this.state.printers} loading={this.state.loading} currentLocation={currentLocation}/>
+        <MonitorHead lastUpdate={this.state.lastUpdate} locations={this.state.locations} handleRefresh={this.handleRefresh} handleFilterChange={this.handleFilterChange} filter={this.state.filter} selectedLocationID={this.state.currentLocation} handleLocationChange={this.handleSubscriptionChange}/>
+        <Printers printers={this.state.filteredPrinters} loading={this.state.loading} currentLocation={currentLocation} loading={this.state.loading}/>
       </div>
     );
   }

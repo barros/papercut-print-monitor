@@ -1,5 +1,6 @@
 require('dotenv').config({path:'../.env'});
 var express = require('express');
+var cors = require('cors');
 var https = require('https');
 const BodyParser = require('body-parser');
 var app = express();
@@ -7,6 +8,7 @@ const server = require('http').createServer(app); // server instance
 var axios = require('axios');
 const socketIO = require('socket.io');
 const io = socketIO(server); // creates our socket using the instance of the server
+const utils = require('./utils');
 
 // MongoDB Setup 
 const MongoClient = require("mongodb").MongoClient;
@@ -42,6 +44,7 @@ app.use(function (req, res, next) {
   next();
 });
 app.use(BodyParser.json());
+app.use(cors());
 app.use(BodyParser.urlencoded({ extended: true }));
 
 // Start server
@@ -184,6 +187,7 @@ function updateDB(data){
     const record = {
       'name': printerName,
       'status': printer.status,
+      'badge': utils.getBadge(printer.status),
       'lastModified': new Date()
     };
 
