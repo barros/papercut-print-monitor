@@ -6,9 +6,54 @@
       "channel": "all locations"
     },
     "1": {
+      "name": "Bapst Library",
+      "dropdownText": "Bapst Library",
+      "channel": "bapst"
+    },
+    "2": {
+      "name": "Corcoran Commons (Lower Live)",
+      "dropdownText": "Corcoran Commons",
+      "channel": "corcoran"
+    },
+    "3": {
+      "name": "Digital Media Studio",
+      "dropdownText": "Digital Media",
+      "channel": "digital"
+    },
+    "4": {
+      "name": "Fulton MBA",
+      "dropdownText": "Fulton",
+      "channel": "fltn"
+    },
+    "5": {
+      "name": "Law Library",
+      "dropdownText": "Law Library",
+      "channel": "lawlib"
+    },
+    "6": {
+      "name": "Maloney Hall",
+      "dropdownText": "Maloney Hall",
+      "channel": "maloney"
+    },
+    "7": {
+      "name": "McElroy Hall",
+      "dropdownText": "McElroy",
+      "channel": "mcelroy"
+    },
+    "8": {
       "name": "O'Neill Library",
       "dropdownText": "O'Neill Library",
       "channel": "oneill"
+    },
+    "9": {
+      "name": "Social Work Library",
+      "dropdownText": "Social Work Library",
+      "channel": "swl"
+    },
+    "10": {
+      "name": "Theology and Ministry Library",
+      "dropdownText": "Theology & Ministry",
+      "channel": "tml"
     }
   }
 }

@@ -16,7 +16,7 @@ class Printers extends React.Component {
       });
     } else {
       if (!this.props.loading){
-        noPrinterMessage = <h4 style={{fontFamily: 'Questrial', color: '#464948'}}>There are currently no printers with the selected filters</h4>
+        noPrinterMessage = <h4 style={{fontFamily: 'Questrial', color: '#464948'}}>There are currently no printers with the selected filter</h4>
       }
     }
     

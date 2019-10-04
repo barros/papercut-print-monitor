@@ -54,21 +54,36 @@ server.listen(port, () => {
   var port = server.address().port;
 
   // Connect to MongoDB
+  setupDB();
+  // while (true){ // Continue reattemping DB connection if attempts fail
+  //   try {
+  //     setupDB();
+  //     break;
+  //   } catch(err){
+  //     // Log error
+  //     console.log('ERROR CONNECTING TO MONGODB: '+err);
+  //   }
+  // }
+  console.log(`Backend API server is running on ${host}:${port}`);
+});
+
+function setupDB() {
   while (true){ // Continue reattemping DB connection if attempts fail
     try {
       MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
         if(error) {
           console.log(error);
+        } else {
+          database = client.db(DATABASE_NAME);
+          collection = database.collection('printers');
+          /*
+            Add the printers to DB in a batch so that there can be one callback when data is inserted/updated
+            Callback would only work for each collection.updateOne call
+          */
+          batch = collection.initializeUnorderedBulkOp();
+          console.log(`Connected to database: ${DATABASE_NAME}`);
+          startFetching();
         }
-        database = client.db(DATABASE_NAME);
-        collection = database.collection('printers');
-        /*
-          Add the printers to DB in a batch so that there can be one callback when data is inserted/updated
-          Callback would only work for each collection.updateOne call
-        */
-        batch = collection.initializeUnorderedBulkOp();
-        console.log(`Connected to database: ${DATABASE_NAME}`);
-        startFetching();
       });
       break;
     } catch(err){
@@ -76,8 +91,7 @@ server.listen(port, () => {
       console.log('ERROR CONNECTING TO MONGODB: '+err);
     }
   }
-  console.log(`Backend API server is running on ${host}:${port}`);
-});
+}
 
 function startFetching() {
   // First PaperCut API fetch

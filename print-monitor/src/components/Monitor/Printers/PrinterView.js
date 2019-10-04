@@ -27,7 +27,7 @@ class PrinterView extends React.Component {
     let backgroundColor = utils.getBadgeColor(badgeText);
     let fontColor = ((backgroundColor==='#c50000' || backgroundColor==='#c46512') ? 'white' : 'black');
     
-    return (<div style={{position: 'relative', backgroundColor: '#f7f7f7', boxShadow: '2px 2px 15px #888888', width: '375px', minWidth: '290px', height: 'auto', minHeight: '120px', marginBottom: '20px', paddingTop: '13px', paddingLeft: '15px', paddingRight: '15px', paddingBottom: '5px', borderRadius:'10px'}}>
+    return (<div style={{position: 'relative', backgroundColor: '#f7f7f7', boxShadow: '0px 17px 26px -10px rgba(128,128,128,1)', width: '375px', minWidth: '290px', height: 'auto', minHeight: '120px', marginBottom: '20px', paddingTop: '13px', paddingLeft: '15px', paddingRight: '15px', paddingBottom: '5px', borderRadius:'10px'}}>
               <div style={{marginBottom: '5px'}}>
                 <Badge text={badgeText} backgroundColor={backgroundColor} fontColor={fontColor} />
                 {iconJSX}
