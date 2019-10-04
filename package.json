@@ -4,8 +4,9 @@
   "description": "PaperCut Print Monitor for Boston College",
   "main": "index.js",
   "scripts": {
-    "heroku-postbuild": "cd print-monitor && npm install"
+    "heroku-postbuild": "cd print-monitor && npm build"
   },
+  "cacheDirectories": ["print-monitor/node_modules"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/barros/papercut-print-monitor.git"
