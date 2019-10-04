@@ -1,0 +1,19 @@
+{
+  "name": "papercut-print-monitor",
+  "version": "1.0.0",
+  "description": "PaperCut Print Monitor for Boston College",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "cd client && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barros/papercut-print-monitor.git"
+  },
+  "author": "Jeffrey Barros Peña",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/barros/papercut-print-monitor/issues"
+  },
+  "homepage": "https://github.com/barros/papercut-print-monitor#readme"
+}
