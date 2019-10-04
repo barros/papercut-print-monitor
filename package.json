@@ -4,7 +4,7 @@
   "description": "PaperCut Print Monitor for Boston College",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd client && npm install"
+    "postinstall": "cd print-monitor && npm install"
   },
   "repository": {
     "type": "git",
